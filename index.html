@@ -149,13 +149,12 @@
 
   .item {
     display: grid;
-    grid-template-columns: 88px 220px 1fr;
+    grid-template-columns: 240px 1fr;
     gap: 20px;
     padding: 22px 0;
     border-bottom: 1px solid var(--line);
     align-items: baseline;
   }
-  .item .no { color: var(--accent); }
   .item h3 { font-size: 17px; font-weight: 700; letter-spacing: 0.01em; }
   .item h3 a { color: inherit; text-decoration: none; border-bottom: 2px solid var(--accent); }
   .item h3 a:hover, .item h3 a:focus-visible { background: var(--accent); color: var(--paper); }
@@ -179,8 +178,7 @@
   footer a:hover { background: var(--accent); color: var(--paper); }
 
   @media (max-width: 720px) {
-    .item { grid-template-columns: 56px 1fr; }
-    .item p { grid-column: 2; }
+    .item { grid-template-columns: 1fr; gap: 6px; }
     .hero { padding: 48px 0 32px; }
     .statue { position: static; display: block; width: min(72vw, 320px); margin: 40px auto 0; }
   }
@@ -214,41 +212,34 @@
   <section class="manifest" aria-label="Current work">
     <div class="manifest-head">
       <h2>Cargo on board</h2>
-      <span class="count mono">6 line items</span>
     </div>
 
     <div class="item">
-      <span class="no mono">Line 01</span>
       <h3><a href="https://air-crate.com">Aircrate</a></h3>
       <p>Freight forwarding from the USA and China to Suriname. Storefront, quoting, multi-rail payments, tracking, operator tooling. Runs on <em>three-tier high-availability PostgreSQL</em>; the last line of defense is a Raspberry Pi.</p>
     </div>
 
     <div class="item">
-      <span class="no mono">Line 02</span>
       <h3><a href="https://github.com/giannisanni/pulsar">pulsar</a></h3>
       <p>SSD-streaming inference engine for giant mixture-of-experts models, in Rust and CUDA. Runs <em>743B-parameter models on two consumer 16 GB GPUs</em>. Benchmark-gated development, 200+ stars.</p>
     </div>
 
     <div class="item">
-      <span class="no mono">Line 03</span>
       <h3><a href="https://github.com/giannisanni/neutronstar">neutronstar</a></h3>
       <p>CUDA evolution of antirez's ds4: io_uring expert streaming, cross-layer prefetch, and the <em>first MTP speculative decoding for GLM 5.2</em>.</p>
     </div>
 
     <div class="item">
-      <span class="no mono">Line 04</span>
       <h3><a href="https://github.com/giannisanni/protostar">protostar</a></h3>
       <p>Continual-learning research: a 134M-parameter model that <em>retains 77% of learned skills</em> across sequential consolidations, via replay-gated memory.</p>
     </div>
 
     <div class="item">
-      <span class="no mono">Line 05</span>
       <h3><a href="https://github.com/giannisanni/encoder-free-speech">encoder-free-speech</a></h3>
       <p>Speech research on Gemma: audio understanding and generation without a separate encoder stack. Paper writeup in the repo, <em>WER-gated results</em>.</p>
     </div>
 
     <div class="item">
-      <span class="no mono">Line 06</span>
       <h3><a href="https://github.com/giannisanni/agora">agora</a></h3>
       <p>A Rust MCP hub that links AI coding agents across machines and harnesses, with <em>exactly-once message delivery</em>. My agents use it to work as a team.</p>
     </div>
@@ -260,9 +251,8 @@
   </section>
 </main>
 
+<!-- Statue: Nike of Samothrace. Photo by Fra00, Wikimedia Commons (File:Nike_of_Samothrake_Louvre_Ma2369_n4.png), CC BY-SA 4.0, rendered here as halftone tiles. -->
 <footer class="wrap">
-  <span class="mono">Manifest no. 001 <span style="color:var(--accent)">//</span> Paramaribo</span>
-  <span class="mono">Nike: <a href="https://commons.wikimedia.org/wiki/File:Nike_of_Samothrake_Louvre_Ma2369_n4.png">Fra00, CC BY-SA 4.0</a></span>
   <span class="mono"><a href="mailto:gsanrochman@proton.me">gsanrochman@proton.me</a></span>
 </footer>
 
