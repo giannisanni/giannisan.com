@@ -121,7 +121,7 @@
   .links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .manifest { padding: 48px 0 8px; position: relative; }
-  .statue-side { top: -50px; left: -70px; width: min(42vw, 460px); }
+  .statue-side { top: 0; left: 0; width: min(30vw, 400px); opacity: 0.6; }
   .manifest-head, .manifest .item { position: relative; z-index: 1; }
   .manifest-head {
     display: flex;
@@ -171,7 +171,7 @@
   footer a:hover { background: var(--accent); color: var(--paper); }
 
   @media (min-width: 1001px) {
-    .manifest { padding-left: 130px; }
+    .manifest { padding-left: 330px; }
     .manifest-head h2, .item h3 a {
       text-shadow: 0 0 12px var(--paper), 0 0 5px var(--paper), 0 0 2px var(--paper);
     }
@@ -181,8 +181,12 @@
     .statue-side { display: none; }
   }
 
+  @media (max-width: 1200px) {
+    .statue-hero { right: -110px; width: min(58vw, 620px); }
+  }
+
   @media (max-width: 900px) {
-    .statue-hero { width: 62vw; right: -120px; opacity: 0.85; }
+    .statue-hero { width: 62vw; right: -90px; opacity: 0.85; }
     h1 { max-width: 8ch; }
   }
 
