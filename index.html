@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gianni Sanrochman</title>
-<meta name="description" content="Gianni Sanrochman is an AI-native builder in Paramaribo, Suriname. Founder of Aircrate and creator of pulsar, an open-source Rust and CUDA inference engine for giant mixture-of-experts models.">
+<meta name="description" content="Gianni Sanrochman builds production systems in Paramaribo, Suriname. Founder of Aircrate and creator of pulsar, an open-source Rust and CUDA inference engine for giant mixture-of-experts models.">
 <link rel="canonical" href="https://giannisan.com/">
 <meta property="og:title" content="Gianni Sanrochman">
-<meta property="og:description" content="AI-native builder in Paramaribo, Suriname. Founder of Aircrate. Creator of pulsar.">
+<meta property="og:description" content="Builder in Paramaribo, Suriname. Founder of Aircrate. Creator of pulsar.">
 <meta property="og:url" content="https://giannisan.com/">
 <meta property="og:type" content="profile">
-<meta name="theme-color" content="#12181D">
+<meta name="theme-color" content="#0F1519">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312181D'/%3E%3Ctext x='32' y='44' font-family='Arial Black,sans-serif' font-size='36' font-weight='900' fill='%23F4F5F1' text-anchor='middle'%3EG%3C/text%3E%3Crect x='46' y='46' width='8' height='8' fill='%23D9480F'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,12 +38,12 @@
 </script>
 <style>
   :root {
-    --paper: #F4F5F1;
-    --ink: #12181D;
-    --muted: #5A6670;
-    --line: #C9CEC3;
-    --accent: #D9480F;
-    --chip: #ECEEE6;
+    --paper: #0F1519;
+    --ink: #EDEDE6;
+    --muted: #97A1A8;
+    --line: #2A333A;
+    --accent: #E8590C;
+    --chip: #1A2127;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -191,7 +191,7 @@
 <header class="wrap">
   <div class="topbar mono">
     <span>Gianni Sanrochman <span class="dot">//</span> giannisan.com</span>
-    <span>Paramaribo, Suriname <span class="dot">//</span> 5.85 N, 55.20 W</span>
+    <span>Paramaribo, Suriname</span>
   </div>
 </header>
 
@@ -200,7 +200,7 @@
     <canvas id="statue" class="statue" role="img" aria-label="The Nike of Samothrace rendered as a grid of halftone dots that scatter away from the cursor"></canvas>
     <p class="eyebrow mono">Builder's manifest, rev. 2026</p>
     <h1>Gianni Sanrochman</h1>
-    <p class="role">I turn ideas into running systems: a freight company, an inference engine, an operating system. I own the problem, the architecture, the verification, and the pager.</p>
+    <p class="role">I just love building. Lately: a freight company, an inference engine, an operating system. I own the problem, the architecture, the verification, and the pager.</p>
     <p class="bio">I founded and run <strong>Aircrate</strong>, a freight forwarder connecting the USA and China to Suriname, on a stack I built end to end. I maintain <strong>pulsar</strong>, an open-source Rust and CUDA engine that streams 743B-parameter models from SSD through two consumer GPUs. MSc in Psychology from Erasmus University Rotterdam, interdisciplinary track on digitalisation in work and society.</p>
     <nav class="links" aria-label="Profiles">
       <a href="https://github.com/giannisanni">GitHub</a>
@@ -256,7 +256,7 @@
 
   <section class="method">
     <h2>Method</h2>
-    <p>Everything above ships the same way: <strong>iterative and measured</strong>. Held-out benchmarks decide what lands, controls are built in by default, and negative results stay in the record. AI writes most of the code; I decide what is true.</p>
+    <p>Everything above ships the same way: <strong>iterative and measured</strong>. Held-out benchmarks decide what lands, controls are built in by default, and negative results stay in the record.</p>
   </section>
 </main>
 
@@ -272,7 +272,7 @@
   var ctx = cv.getContext('2d');
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = matchMedia('(pointer: fine)').matches;
-  var paper = '#F4F5F1', ink = '#12181D', accent = '#D9480F';
+  var paper = '#0F1519', accent = '#E8590C';
   var parts = [], W = 0, H = 0, running = false, calm = 0;
   var px = -1e4, py = -1e4;
   var K = 0.025, DAMP = 0.88, R = 95, F = 3.4;
@@ -298,14 +298,14 @@
       for (var c = 0; c < cols; c++) {
         var i = (r * cols + c) * 4;
         if (d[i + 3] < 110) continue;
-        var lum = d[i] / 255;
-        var s = 1.2 + (1 - lum) * step * 1.05;
+        var R8 = d[i], G8 = d[i + 1], B8 = d[i + 2];
+        var lum = (0.2126 * R8 + 0.7152 * G8 + 0.0722 * B8) / 255;
+        var s = 1.4 + lum * step * 1.05;
         if (s > step - 0.5) s = step - 0.5;
         var x = c * step + step / 2, y = r * step + step / 2;
-        parts.push({
-          hx: x, hy: y, x: x, y: y, vx: 0, vy: 0, s: s,
-          col: parts.length % 53 === 0 ? accent : ink
-        });
+        var col = parts.length % 53 === 0 ? accent :
+          'rgb(' + Math.min(255, R8 * 1.12 | 0) + ',' + Math.min(255, G8 * 1.12 | 0) + ',' + Math.min(255, B8 * 1.12 | 0) + ')';
+        parts.push({ hx: x, hy: y, x: x, y: y, vx: 0, vy: 0, s: s, col: col });
       }
     }
     if (reduced) { drawStatic(); return; }
