@@ -75,7 +75,16 @@
   }
   .topbar .dot { color: var(--accent); }
 
-  .hero { padding: 72px 0 40px; }
+  .hero { padding: 72px 0 40px; position: relative; }
+  .hero > * { position: relative; z-index: 1; }
+  .statue {
+    position: absolute;
+    top: 16px;
+    right: -12px;
+    width: min(42vw, 460px);
+    aspect-ratio: 440 / 667;
+    z-index: 0;
+  }
   .eyebrow { color: var(--accent); margin-bottom: 20px; }
   h1 {
     font-family: "Archivo Black", "Archivo", sans-serif;
@@ -84,6 +93,11 @@
     letter-spacing: -0.015em;
     text-transform: uppercase;
     max-width: 12ch;
+    text-shadow:
+      0.045em 0 var(--paper), -0.045em 0 var(--paper),
+      0 0.045em var(--paper), 0 -0.045em var(--paper),
+      0.032em 0.032em var(--paper), -0.032em 0.032em var(--paper),
+      0.032em -0.032em var(--paper), -0.032em -0.032em var(--paper);
   }
   .role {
     margin-top: 28px;
@@ -168,6 +182,7 @@
     .item { grid-template-columns: 56px 1fr; }
     .item p { grid-column: 2; }
     .hero { padding: 48px 0 32px; }
+    .statue { position: static; display: block; width: min(72vw, 320px); margin: 40px auto 0; }
   }
 </style>
 </head>
@@ -182,6 +197,7 @@
 
 <main class="wrap">
   <section class="hero">
+    <canvas id="statue" class="statue" role="img" aria-label="The Nike of Samothrace rendered as a grid of halftone dots that scatter away from the cursor"></canvas>
     <p class="eyebrow mono">Builder's manifest, rev. 2026</p>
     <h1>Gianni Sanrochman</h1>
     <p class="role">AI-native builder. I direct AI coding agents to ship production systems: I own the problem, the architecture, the verification, and the pager.</p>
@@ -246,8 +262,131 @@
 
 <footer class="wrap">
   <span class="mono">Manifest no. 001 <span style="color:var(--accent)">//</span> Paramaribo</span>
+  <span class="mono">Nike: <a href="https://commons.wikimedia.org/wiki/File:Nike_of_Samothrake_Louvre_Ma2369_n4.png">Fra00, CC BY-SA 4.0</a></span>
   <span class="mono"><a href="mailto:gsanrochman@proton.me">gsanrochman@proton.me</a></span>
 </footer>
+
+<script>
+(function () {
+  var cv = document.getElementById('statue');
+  var ctx = cv.getContext('2d');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var finePointer = matchMedia('(pointer: fine)').matches;
+  var paper = '#F4F5F1', ink = '#12181D', accent = '#D9480F';
+  var parts = [], W = 0, H = 0, running = false, calm = 0;
+  var px = -1e4, py = -1e4;
+  var K = 0.025, DAMP = 0.88, R = 95, F = 3.4;
+
+  var img = new Image();
+  img.src = 'nike.png';
+
+  function build() {
+    W = cv.clientWidth; H = cv.clientHeight;
+    if (!W || !H) return;
+    var dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var step = W > 380 ? 8 : 7;
+    var cols = Math.ceil(W / step), rows = Math.ceil(H / step);
+    var off = document.createElement('canvas');
+    off.width = cols; off.height = rows;
+    var octx = off.getContext('2d');
+    octx.drawImage(img, 0, 0, cols, rows);
+    var d = octx.getImageData(0, 0, cols, rows).data;
+    parts = [];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var i = (r * cols + c) * 4;
+        if (d[i + 3] < 110) continue;
+        var lum = d[i] / 255;
+        var s = 1.2 + (1 - lum) * step * 1.05;
+        if (s > step - 0.5) s = step - 0.5;
+        var x = c * step + step / 2, y = r * step + step / 2;
+        parts.push({
+          hx: x, hy: y, x: x, y: y, vx: 0, vy: 0, s: s,
+          col: parts.length % 53 === 0 ? accent : ink
+        });
+      }
+    }
+    if (reduced) { drawStatic(); return; }
+    for (var j = 0; j < parts.length; j++) {
+      var q = parts[j], a = j * 2.399963, m = 40 + (j % 90);
+      q.x = q.hx + Math.cos(a) * m;
+      q.y = q.hy + Math.sin(a) * m;
+    }
+    wake();
+  }
+
+  function drawDots() {
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      ctx.fillStyle = p.col;
+      ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
+    }
+  }
+
+  function drawStatic() {
+    ctx.clearRect(0, 0, W, H);
+    drawDots();
+  }
+
+  function loop() {
+    var motion = 0;
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      var dx = p.x - px, dy = p.y - py;
+      var d2 = dx * dx + dy * dy;
+      if (d2 < R * R) {
+        var d = Math.sqrt(d2) || 1;
+        var f = (R - d) / R * F;
+        p.vx += dx / d * f;
+        p.vy += dy / d * f;
+      }
+      p.vx += (p.hx - p.x) * K;
+      p.vy += (p.hy - p.y) * K;
+      p.vx *= DAMP; p.vy *= DAMP;
+      p.x += p.vx; p.y += p.vy;
+      motion += Math.abs(p.vx) + Math.abs(p.vy);
+    }
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    drawDots();
+    calm = motion < 0.6 ? calm + 1 : 0;
+    if (calm > 30) { running = false; drawStatic(); return; }
+    requestAnimationFrame(loop);
+  }
+
+  function wake() {
+    if (!running && parts.length) {
+      running = true; calm = 0;
+      requestAnimationFrame(loop);
+    }
+  }
+
+  function onMove(e) {
+    var b = cv.getBoundingClientRect();
+    var x = e.clientX - b.left, y = e.clientY - b.top;
+    if (x > -80 && y > -80 && x < b.width + 80 && y < b.height + 80) {
+      px = x; py = y; wake();
+    } else {
+      px = -1e4; py = -1e4;
+    }
+  }
+  if (finePointer && !reduced) {
+    addEventListener('pointermove', onMove, { passive: true });
+    addEventListener('mousemove', onMove, { passive: true });
+  }
+
+  var rt;
+  addEventListener('resize', function () {
+    clearTimeout(rt); rt = setTimeout(build, 200);
+  });
+
+  if (img.complete) build(); else img.onload = build;
+})();
+</script>
 
 </body>
 </html>
