@@ -64,16 +64,7 @@
   }
   .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
 
-  .topbar {
-    border-bottom: 2px solid var(--ink);
-    padding: 14px 0;
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    color: var(--ink);
-  }
-  .topbar .dot { color: var(--accent); }
+  .dot { color: var(--accent); }
 
   .hero { padding: 72px 0 40px; position: relative; }
   .hero > * { position: relative; z-index: 1; }
@@ -186,13 +177,6 @@
 </head>
 <body>
 
-<header class="wrap">
-  <div class="topbar mono">
-    <span>Gianni Sanrochman <span class="dot">//</span> giannisan.com</span>
-    <span>Paramaribo, Suriname</span>
-  </div>
-</header>
-
 <main class="wrap">
   <section class="hero">
     <canvas id="statue" class="statue" role="img" aria-label="The Nike of Samothrace rendered as a grid of halftone dots that scatter away from the cursor"></canvas>
@@ -253,6 +237,8 @@
 
 <!-- Statue: Nike of Samothrace. Photo by Fra00, Wikimedia Commons (File:Nike_of_Samothrake_Louvre_Ma2369_n4.png), CC BY-SA 4.0, rendered here as halftone tiles. -->
 <footer class="wrap">
+  <span class="mono">Gianni Sanrochman <span class="dot">//</span> giannisan.com</span>
+  <span class="mono">Paramaribo, Suriname</span>
   <span class="mono"><a href="mailto:gsanrochman@proton.me">gsanrochman@proton.me</a></span>
 </footer>
 
