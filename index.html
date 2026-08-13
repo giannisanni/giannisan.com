@@ -55,6 +55,7 @@
     font-size: 17px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   .mono {
     font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -70,12 +71,10 @@
   .hero > * { position: relative; z-index: 1; }
   .statue {
     position: absolute;
-    top: 16px;
-    right: -12px;
-    width: min(42vw, 460px);
-    aspect-ratio: 440 / 667;
+    pointer-events: none;
     z-index: 0;
   }
+  .statue-hero { top: -30px; right: -170px; width: min(64vw, 700px); }
   .eyebrow { color: var(--accent); margin-bottom: 20px; }
   h1 {
     font-family: "Archivo Black", "Archivo", sans-serif;
@@ -97,6 +96,7 @@
     max-width: 34ch;
     line-height: 1.35;
   }
+  .role .hl { color: var(--accent); }
   .bio {
     margin-top: 20px;
     color: var(--muted);
@@ -120,7 +120,9 @@
   .links a:hover, .links a:focus-visible { background: var(--ink); color: var(--paper); }
   .links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .manifest { padding: 48px 0 8px; }
+  .manifest { padding: 48px 0 8px; position: relative; }
+  .statue-side { top: 0; left: -160px; width: min(52vw, 560px); }
+  .manifest-head, .manifest .item { position: relative; z-index: 1; }
   .manifest-head {
     display: flex;
     justify-content: space-between;
@@ -168,10 +170,52 @@
   footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
   footer a:hover { background: var(--accent); color: var(--paper); }
 
+  @media (min-width: 1001px) {
+    .manifest { padding-left: 300px; }
+  }
+
+  @media (max-width: 1000px) {
+    .statue-side { display: none; }
+  }
+
+  @media (max-width: 900px) {
+    .statue-hero { width: 62vw; right: -120px; opacity: 0.85; }
+    h1 { max-width: 8ch; }
+  }
+
   @media (max-width: 720px) {
-    .item { grid-template-columns: 1fr; gap: 6px; }
-    .hero { padding: 48px 0 32px; }
-    .statue { position: static; display: block; width: min(72vw, 320px); margin: 40px auto 0; }
+    body { font-size: 16px; }
+    .wrap { padding: 0 20px; }
+    .hero {
+      padding: 36px 0 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .statue-hero {
+      position: static;
+      order: 9;
+      align-self: center;
+      width: min(96vw, 420px);
+      margin: 24px 0 0;
+      opacity: 1;
+    }
+    h1 {
+      max-width: none;
+      font-size: min(11vw, 68px);
+      text-shadow: none;
+      overflow-wrap: anywhere;
+    }
+    .role { margin-top: 22px; max-width: none; font-size: 19px; }
+    .bio { max-width: none; }
+    .links { gap: 8px; margin-top: 28px; }
+    .links a { padding: 12px 14px; font-size: 12px; }
+    .manifest { padding: 36px 0 8px; }
+    .item { grid-template-columns: 1fr; gap: 6px; padding: 18px 0; }
+    .item p { font-size: 15px; }
+    .method { padding: 32px 0 40px; }
+    .method p { max-width: none; }
+    footer { padding: 18px 0 40px; gap: 8px; flex-direction: column; }
   }
 </style>
 </head>
@@ -179,10 +223,10 @@
 
 <main class="wrap">
   <section class="hero">
-    <canvas id="statue" class="statue" role="img" aria-label="The Nike of Samothrace rendered as a grid of halftone dots that scatter away from the cursor"></canvas>
+    <canvas class="statue statue-hero" data-img="nike.png" role="img" aria-label="The Nike of Samothrace rendered as halftone tiles that disperse away from the cursor"></canvas>
     <p class="eyebrow mono">Builder's manifest, rev. 2026</p>
     <h1>Gianni Sanrochman</h1>
-    <p class="role">I just love building. Lately: a freight company, an inference engine, an operating system. I own the problem, the architecture, the verification, and the pager.</p>
+    <p class="role"><span class="hl">I just love building.</span> Lately: a freight company, an inference engine, an operating system. I own the problem, the architecture, the verification, and the pager.</p>
     <p class="bio">I founded and run <strong>Aircrate</strong>, a freight forwarder connecting the USA and China to Suriname, on a stack I built end to end. I maintain <strong>pulsar</strong>, an open-source Rust and CUDA engine that streams 743B-parameter models from SSD through two consumer GPUs. MSc in Psychology from Erasmus University Rotterdam, interdisciplinary track on digitalisation in work and society.</p>
     <nav class="links" aria-label="Profiles">
       <a href="https://github.com/giannisanni">GitHub</a>
@@ -194,6 +238,7 @@
   </section>
 
   <section class="manifest" aria-label="Current work">
+    <canvas class="statue statue-side" data-img="thinker.png" role="img" aria-label="Rodin's Thinker rendered as halftone tiles that disperse away from the cursor"></canvas>
     <div class="manifest-head">
       <h2>Cargo on board</h2>
     </div>
@@ -235,7 +280,12 @@
   </section>
 </main>
 
-<!-- Statue: Nike of Samothrace. Photo by Fra00, Wikimedia Commons (File:Nike_of_Samothrake_Louvre_Ma2369_n4.png), CC BY-SA 4.0, rendered here as halftone tiles. -->
+<!--
+  Statues rendered as halftone tiles. Sources on Wikimedia Commons:
+  Nike of Samothrace, photo by Fra00, CC BY-SA 4.0.
+  The Thinker (Rodin), National Gallery of Art side view, photo by APK, CC BY 4.0.
+  Full credits in README.md.
+-->
 <footer class="wrap">
   <span class="mono">Gianni Sanrochman <span class="dot">//</span> giannisan.com</span>
   <span class="mono">Paramaribo, Suriname</span>
@@ -244,123 +294,175 @@
 
 <script>
 (function () {
-  var cv = document.getElementById('statue');
-  var ctx = cv.getContext('2d');
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = matchMedia('(pointer: fine)').matches;
-  var paper = '#0F1519', accent = '#2CB67D';
-  var parts = [], W = 0, H = 0, running = false, calm = 0;
-  var px = -1e4, py = -1e4;
-  var K = 0.025, DAMP = 0.88, R = 95, F = 3.4;
+  var accent = '#2CB67D';
+  var MX = 0.20, MY = 0.08;
+  var K = 0.022, DAMP = 0.9, R = 110, F = 4.2;
+  var LOOSE = 150, FADE = 190;
+  var instances = [];
 
-  var img = new Image();
-  img.src = 'nike.png';
+  function makeStatue(cv, img) {
+    var ctx = cv.getContext('2d');
+    var inst = { parts: [], W: 0, H: 0, running: false, calm: 0, px: -1e4, py: -1e4 };
+    cv.style.aspectRatio = (img.naturalWidth * (1 - 2 * MY)) + ' / ' + (img.naturalHeight * (1 - 2 * MX));
 
-  function build() {
-    W = cv.clientWidth; H = cv.clientHeight;
-    if (!W || !H) return;
-    var dpr = Math.min(devicePixelRatio || 1, 2);
-    cv.width = W * dpr; cv.height = H * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var step = W > 380 ? 8 : 7;
-    var cols = Math.ceil(W / step), rows = Math.ceil(H / step);
-    var off = document.createElement('canvas');
-    off.width = cols; off.height = rows;
-    var octx = off.getContext('2d');
-    octx.drawImage(img, 0, 0, cols, rows);
-    var d = octx.getImageData(0, 0, cols, rows).data;
-    parts = [];
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var i = (r * cols + c) * 4;
-        if (d[i + 3] < 110) continue;
-        var R8 = d[i], G8 = d[i + 1], B8 = d[i + 2];
-        var lum = (0.2126 * R8 + 0.7152 * G8 + 0.0722 * B8) / 255;
-        var s = 1.4 + lum * step * 1.05;
-        if (s > step - 0.5) s = step - 0.5;
-        var x = c * step + step / 2, y = r * step + step / 2;
-        var col = parts.length % 53 === 0 ? accent :
-          'rgb(' + Math.min(255, R8 * 1.12 | 0) + ',' + Math.min(255, G8 * 1.12 | 0) + ',' + Math.min(255, B8 * 1.12 | 0) + ')';
-        parts.push({ hx: x, hy: y, x: x, y: y, vx: 0, vy: 0, s: s, col: col });
+    function build() {
+      var W = inst.W = cv.clientWidth, H = inst.H = cv.clientHeight;
+      if (!W || !H) return;
+      var dpr = Math.min(devicePixelRatio || 1, 2);
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var step = W > 640 ? 8 : 6;
+      var cols = Math.ceil(W / step), rows = Math.ceil(H / step);
+      var off = document.createElement('canvas');
+      off.width = cols; off.height = rows;
+      var octx = off.getContext('2d');
+      octx.drawImage(img, MX * cols, MY * rows, (1 - 2 * MX) * cols, (1 - 2 * MY) * rows);
+      var d = octx.getImageData(0, 0, cols, rows).data;
+
+      var hist = new Uint32Array(256), n = 0, q;
+      for (q = 0; q < d.length; q += 4) {
+        if (d[q + 3] < 110) continue;
+        hist[(0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2]) | 0]++;
+        n++;
       }
-    }
-    if (reduced) { drawStatic(); return; }
-    for (var j = 0; j < parts.length; j++) {
-      var q = parts[j], a = j * 2.399963, m = 40 + (j % 90);
-      q.x = q.hx + Math.cos(a) * m;
-      q.y = q.hy + Math.sin(a) * m;
-    }
-    wake();
-  }
+      var lo = 0, hi = 255, acc = 0;
+      for (q = 0; q < 256; q++) { acc += hist[q]; if (acc >= n * 0.04) { lo = q; break; } }
+      acc = 0;
+      for (q = 255; q >= 0; q--) { acc += hist[q]; if (acc >= n * 0.04) { hi = q; break; } }
+      var span = Math.max(24, hi - lo);
 
-  function drawDots() {
-    for (var i = 0; i < parts.length; i++) {
-      var p = parts[i];
-      ctx.fillStyle = p.col;
-      ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
-    }
-  }
-
-  function drawStatic() {
-    ctx.clearRect(0, 0, W, H);
-    drawDots();
-  }
-
-  function loop() {
-    var motion = 0;
-    for (var i = 0; i < parts.length; i++) {
-      var p = parts[i];
-      var dx = p.x - px, dy = p.y - py;
-      var d2 = dx * dx + dy * dy;
-      if (d2 < R * R) {
-        var d = Math.sqrt(d2) || 1;
-        var f = (R - d) / R * F;
-        p.vx += dx / d * f;
-        p.vy += dy / d * f;
+      var parts = inst.parts = [];
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var i = (r * cols + c) * 4;
+          if (d[i + 3] < 110) continue;
+          var R8 = d[i], G8 = d[i + 1], B8 = d[i + 2];
+          var raw = 0.2126 * R8 + 0.7152 * G8 + 0.0722 * B8;
+          var lum = Math.max(0, Math.min(1, (raw - lo) / span));
+          var boost = raw > 4 ? (72 + lum * 180) / raw : 1;
+          var s = 2.5 + lum * step * 0.8;
+          if (s > step - 0.5) s = step - 0.5;
+          var col = parts.length % 53 === 0 ? accent :
+            'rgb(' + Math.min(255, R8 * boost | 0) + ',' + Math.min(255, G8 * boost | 0) + ',' + Math.min(255, B8 * boost | 0) + ')';
+          var x = c * step + step / 2, y = r * step + step / 2;
+          parts.push({ hx: x, hy: y, x: x, y: y, vx: 0, vy: 0, s: s, col: col });
+        }
       }
-      p.vx += (p.hx - p.x) * K;
-      p.vy += (p.hy - p.y) * K;
-      p.vx *= DAMP; p.vy *= DAMP;
-      p.x += p.vx; p.y += p.vy;
-      motion += Math.abs(p.vx) + Math.abs(p.vy);
+      if (reduced) { drawStatic(); return; }
+      for (var j = 0; j < parts.length; j++) {
+        var q = parts[j], a = j * 2.399963, m = 40 + (j % 90);
+        q.x = q.hx + Math.cos(a) * m;
+        q.y = q.hy + Math.sin(a) * m;
+      }
+      wake();
     }
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = paper;
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = 1;
-    drawDots();
-    calm = motion < 0.6 ? calm + 1 : 0;
-    if (calm > 30) { running = false; drawStatic(); return; }
-    requestAnimationFrame(loop);
-  }
 
-  function wake() {
-    if (!running && parts.length) {
-      running = true; calm = 0;
+    function drawDots() {
+      var parts = inst.parts;
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        var ddx = p.x - p.hx, ddy = p.y - p.hy;
+        var disp = Math.sqrt(ddx * ddx + ddy * ddy);
+        var a = disp > 2 ? Math.max(0.1, 1 - disp / FADE) : 1;
+        var s = p.s * (0.5 + 0.5 * a);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = p.col;
+        ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawStatic() {
+      ctx.clearRect(0, 0, inst.W, inst.H);
+      drawDots();
+    }
+
+    function loop() {
+      var parts = inst.parts, motion = 0;
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        var dx = p.x - inst.px, dy = p.y - inst.py;
+        var d2 = dx * dx + dy * dy;
+        if (d2 < R * R) {
+          var d = Math.sqrt(d2) || 1;
+          var f = (R - d) / R * F;
+          p.vx += dx / d * f;
+          p.vy += dy / d * f - f * 0.25;
+        }
+        var ddx = p.hx - p.x, ddy = p.hy - p.y;
+        var disp = Math.sqrt(ddx * ddx + ddy * ddy);
+        var k = K * (1 - Math.min(disp / LOOSE, 1) * 0.8);
+        p.vx += ddx * k; p.vy += ddy * k;
+        p.vx *= DAMP; p.vy *= DAMP;
+        p.x += p.vx; p.y += p.vy;
+        motion += Math.abs(p.vx) + Math.abs(p.vy);
+      }
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,0.42)';
+      ctx.fillRect(0, 0, inst.W, inst.H);
+      ctx.globalCompositeOperation = 'source-over';
+      drawDots();
+      inst.calm = motion < 0.6 ? inst.calm + 1 : 0;
+      if (inst.calm > 40) { inst.running = false; drawStatic(); return; }
       requestAnimationFrame(loop);
     }
+
+    function wake() {
+      if (!inst.running && inst.parts.length) {
+        inst.running = true; inst.calm = 0;
+        requestAnimationFrame(loop);
+      }
+    }
+
+    inst.cv = cv;
+    inst.build = build;
+    inst.wake = wake;
+    instances.push(inst);
+    build();
   }
 
   function onMove(e) {
-    var b = cv.getBoundingClientRect();
-    var x = e.clientX - b.left, y = e.clientY - b.top;
-    if (x > -80 && y > -80 && x < b.width + 80 && y < b.height + 80) {
-      px = x; py = y; wake();
-    } else {
-      px = -1e4; py = -1e4;
+    for (var i = 0; i < instances.length; i++) {
+      var inst = instances[i];
+      var b = inst.cv.getBoundingClientRect();
+      if (b.bottom < -200 || b.top > innerHeight + 200) continue;
+      var x = e.clientX - b.left, y = e.clientY - b.top;
+      if (x > -60 && y > -60 && x < b.width + 60 && y < b.height + 60) {
+        inst.px = x; inst.py = y; inst.wake();
+      } else {
+        inst.px = -1e4; inst.py = -1e4;
+      }
     }
   }
-  if (finePointer && !reduced) {
-    addEventListener('pointermove', onMove, { passive: true });
-    addEventListener('mousemove', onMove, { passive: true });
+
+  if (!reduced) {
+    if (finePointer) {
+      addEventListener('pointermove', onMove, { passive: true });
+      addEventListener('mousemove', onMove, { passive: true });
+    } else {
+      addEventListener('touchmove', function (e) { onMove(e.touches[0]); }, { passive: true });
+      addEventListener('touchstart', function (e) { onMove(e.touches[0]); }, { passive: true });
+      addEventListener('touchend', function () {
+        for (var i = 0; i < instances.length; i++) { instances[i].px = -1e4; instances[i].py = -1e4; }
+      }, { passive: true });
+    }
   }
 
   var rt;
   addEventListener('resize', function () {
-    clearTimeout(rt); rt = setTimeout(build, 200);
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      for (var i = 0; i < instances.length; i++) instances[i].build();
+    }, 200);
   });
 
-  if (img.complete) build(); else img.onload = build;
+  document.querySelectorAll('canvas[data-img]').forEach(function (cv) {
+    var img = new Image();
+    img.addEventListener('load', function () { makeStatue(cv, img); });
+    img.src = cv.dataset.img;
+  });
 })();
 </script>
 

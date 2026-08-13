@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statue variants</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312181D'/%3E%3Ctext x='32' y='44' font-family='Arial Black,sans-serif' font-size='36' font-weight='900' fill='%23F4F5F1' text-anchor='middle'%3EG%3C/text%3E%3Crect x='46' y='46' width='8' height='8' fill='%232CB67D'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #0F1519;
+    --ink: #EDEDE6;
+    --muted: #97A1A8;
+    --line: #2A333A;
+    --accent: #2CB67D;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    padding: 48px 24px 80px;
+  }
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  h1 { font-weight: 900; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em; }
+  .lead { color: var(--muted); margin: 10px 0 40px; max-width: 60ch; }
+  .lead b { color: var(--accent); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 360px));
+    gap: 40px 32px;
+    justify-content: center;
+  }
+  figure { margin: 0; }
+  canvas { width: 100%; display: block; }
+  figcaption {
+    margin-top: 10px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+  }
+  figcaption b { color: var(--accent); }
+  @media (max-width: 900px) { .grid { grid-template-columns: minmax(240px, 420px); } }
+</style>
+</head>
+<body>
+
+<h1>Statue variants</h1>
+<p class="lead">Hover each one to scatter it. Tell me the code you want on the homepage, e.g. <b>T2</b>. Nike is the current statue; the Thinker photo is bronze in real life, the Nike photo is warm-lit marble.</p>
+
+<div class="grid">
+  <figure><canvas data-img="nike.png" data-mode="natural"></canvas><figcaption class="mono"><b>N1</b> Nike, natural photo color</figcaption></figure>
+  <figure><canvas data-img="nike.png" data-mode="marble"></canvas><figcaption class="mono"><b>N2</b> Nike, marble</figcaption></figure>
+  <figure><canvas data-img="nike.png" data-mode="emerald"></canvas><figcaption class="mono"><b>N3</b> Nike, emerald</figcaption></figure>
+  <figure><canvas data-img="thinker.png" data-mode="natural"></canvas><figcaption class="mono"><b>T1</b> Thinker, natural photo color</figcaption></figure>
+  <figure><canvas data-img="thinker.png" data-mode="marble"></canvas><figcaption class="mono"><b>T2</b> Thinker, marble</figcaption></figure>
+  <figure><canvas data-img="thinker.png" data-mode="emerald"></canvas><figcaption class="mono"><b>T3</b> Thinker, emerald</figcaption></figure>
+</div>
+
+<script>
+(function () {
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var paper = '#0F1519', accent = '#2CB67D', bone = '#EDEDE6';
+  var K = 0.025, DAMP = 0.88, R = 80, F = 3.4;
+  var instances = [];
+  var imgCache = {};
+
+  function tileColor(mode, r, g, b, lum, isAccent) {
+    if (mode === 'natural') {
+      if (isAccent) return accent;
+      return 'rgb(' + Math.min(255, r * 1.12 | 0) + ',' + Math.min(255, g * 1.12 | 0) + ',' + Math.min(255, b * 1.12 | 0) + ')';
+    }
+    if (mode === 'marble') {
+      if (isAccent) return accent;
+      var v = 45 + lum * 210;
+      return 'rgb(' + (v | 0) + ',' + (v * 0.97 | 0) + ',' + (v * 0.90 | 0) + ')';
+    }
+    var t = 0.22 + 0.88 * lum;
+    if (isAccent) return bone;
+    return 'rgb(' + (44 * t | 0) + ',' + (182 * t | 0) + ',' + (125 * t | 0) + ')';
+  }
+
+  function makeInstance(cv, img) {
+    var inst = { cv: cv, ctx: cv.getContext('2d'), parts: [], W: 0, H: 0, running: false, calm: 0, px: -1e4, py: -1e4 };
+    var mode = cv.dataset.mode;
+    cv.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+
+    inst.build = function () {
+      var W = inst.W = cv.clientWidth, H = inst.H = cv.clientHeight;
+      if (!W || !H) return;
+      var dpr = Math.min(devicePixelRatio || 1, 2);
+      cv.width = W * dpr; cv.height = H * dpr;
+      inst.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var step = 7;
+      var cols = Math.ceil(W / step), rows = Math.ceil(H / step);
+      var off = document.createElement('canvas');
+      off.width = cols; off.height = rows;
+      var octx = off.getContext('2d');
+      octx.drawImage(img, 0, 0, cols, rows);
+      var d = octx.getImageData(0, 0, cols, rows).data;
+      inst.parts = [];
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var i = (r * cols + c) * 4;
+          if (d[i + 3] < 110) continue;
+          var lum = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+          var s = 1.3 + lum * step * 1.05;
+          if (s > step - 0.5) s = step - 0.5;
+          var x = c * step + step / 2, y = r * step + step / 2;
+          inst.parts.push({
+            hx: x, hy: y, x: x, y: y, vx: 0, vy: 0, s: s,
+            col: tileColor(mode, d[i], d[i + 1], d[i + 2], lum, inst.parts.length % 53 === 0)
+          });
+        }
+      }
+      if (reduced) { inst.drawStatic(); return; }
+      for (var j = 0; j < inst.parts.length; j++) {
+        var q = inst.parts[j], a = j * 2.399963, m = 30 + (j % 70);
+        q.x = q.hx + Math.cos(a) * m;
+        q.y = q.hy + Math.sin(a) * m;
+      }
+      inst.wake();
+    };
+
+    inst.drawDots = function () {
+      for (var i = 0; i < inst.parts.length; i++) {
+        var p = inst.parts[i];
+        inst.ctx.fillStyle = p.col;
+        inst.ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
+      }
+    };
+
+    inst.drawStatic = function () {
+      inst.ctx.clearRect(0, 0, inst.W, inst.H);
+      inst.drawDots();
+    };
+
+    inst.loop = function () {
+      var motion = 0;
+      for (var i = 0; i < inst.parts.length; i++) {
+        var p = inst.parts[i];
+        var dx = p.x - inst.px, dy = p.y - inst.py;
+        var d2 = dx * dx + dy * dy;
+        if (d2 < R * R) {
+          var d = Math.sqrt(d2) || 1;
+          var f = (R - d) / R * F;
+          p.vx += dx / d * f; p.vy += dy / d * f;
+        }
+        p.vx += (p.hx - p.x) * K; p.vy += (p.hy - p.y) * K;
+        p.vx *= DAMP; p.vy *= DAMP;
+        p.x += p.vx; p.y += p.vy;
+        motion += Math.abs(p.vx) + Math.abs(p.vy);
+      }
+      inst.ctx.globalAlpha = 0.3;
+      inst.ctx.fillStyle = paper;
+      inst.ctx.fillRect(0, 0, inst.W, inst.H);
+      inst.ctx.globalAlpha = 1;
+      inst.drawDots();
+      inst.calm = motion < 0.6 ? inst.calm + 1 : 0;
+      if (inst.calm > 30) { inst.running = false; inst.drawStatic(); return; }
+      requestAnimationFrame(inst.loop);
+    };
+
+    inst.wake = function () {
+      if (!inst.running && inst.parts.length) {
+        inst.running = true; inst.calm = 0;
+        requestAnimationFrame(inst.loop);
+      }
+    };
+
+    instances.push(inst);
+    inst.build();
+  }
+
+  function loadImg(src, cb) {
+    if (imgCache[src]) {
+      if (imgCache[src].complete) cb(imgCache[src]);
+      else imgCache[src].addEventListener('load', function () { cb(imgCache[src]); });
+      return;
+    }
+    var img = new Image();
+    imgCache[src] = img;
+    img.addEventListener('load', function () { cb(img); });
+    img.src = src;
+  }
+
+  document.querySelectorAll('canvas[data-img]').forEach(function (cv) {
+    loadImg(cv.dataset.img, function (img) { makeInstance(cv, img); });
+  });
+
+  function onMove(e) {
+    for (var i = 0; i < instances.length; i++) {
+      var inst = instances[i];
+      var b = inst.cv.getBoundingClientRect();
+      var x = e.clientX - b.left, y = e.clientY - b.top;
+      if (x > -60 && y > -60 && x < b.width + 60 && y < b.height + 60) {
+        inst.px = x; inst.py = y; inst.wake();
+      } else {
+        inst.px = -1e4; inst.py = -1e4;
+      }
+    }
+  }
+  if (!reduced) {
+    addEventListener('pointermove', onMove, { passive: true });
+    addEventListener('mousemove', onMove, { passive: true });
+  }
+
+  var rt;
+  addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () { instances.forEach(function (i) { i.build(); }); }, 200);
+  });
+})();
+</script>
+
+</body>
+</html>
