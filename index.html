@@ -122,11 +122,11 @@
 
   .manifest { padding: 48px 0 8px; position: relative; }
   .statue-side {
-    --sw: min(58vw, 820px);
-    top: -40px;
-    width: var(--sw);
-    left: calc(50% - 50vw - var(--sw) * 0.2);
-    opacity: 0.8;
+    top: -50px;
+    width: min(62vw, 900px);
+    left: calc(50% - 50vw);
+    transform: translateX(-20%);
+    opacity: 0.5;
   }
   .manifest-head, .manifest .item { position: relative; z-index: 1; }
   .manifest-head {
@@ -178,8 +178,8 @@
 
   @media (min-width: 1001px) {
     .manifest { padding-left: 330px; }
-    .manifest-head h2, .item h3 a {
-      text-shadow: 0 0 12px var(--paper), 0 0 5px var(--paper), 0 0 2px var(--paper);
+    .manifest-head h2, .item h3 a, .item p {
+      text-shadow: 0 0 14px var(--paper), 0 0 7px var(--paper), 0 0 3px var(--paper);
     }
   }
 
@@ -322,7 +322,7 @@
       var dpr = Math.min(devicePixelRatio || 1, 2);
       cv.width = W * dpr; cv.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var step = W > 640 ? 8 : 6;
+      var step = W > 1000 ? 10 : (W > 640 ? 8 : 6);
       var cols = Math.ceil(W / step), rows = Math.ceil(H / step);
       var off = document.createElement('canvas');
       off.width = cols; off.height = rows;
