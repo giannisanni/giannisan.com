@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gianni Sanrochman</title>
+<meta name="description" content="Gianni Sanrochman is an AI-native builder in Paramaribo, Suriname. Founder of Aircrate and creator of pulsar, an open-source Rust and CUDA inference engine for giant mixture-of-experts models.">
+<link rel="canonical" href="https://giannisan.com/">
+<meta property="og:title" content="Gianni Sanrochman">
+<meta property="og:description" content="AI-native builder in Paramaribo, Suriname. Founder of Aircrate. Creator of pulsar.">
+<meta property="og:url" content="https://giannisan.com/">
+<meta property="og:type" content="profile">
+<meta name="theme-color" content="#12181D">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312181D'/%3E%3Ctext x='32' y='44' font-family='Arial Black,sans-serif' font-size='36' font-weight='900' fill='%23F4F5F1' text-anchor='middle'%3EG%3C/text%3E%3Crect x='46' y='46' width='8' height='8' fill='%23D9480F'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Gianni Sanrochman",
+  "givenName": "Gianni",
+  "familyName": "Sanrochman",
+  "url": "https://giannisan.com/",
+  "email": "mailto:gianni@giannisan.com",
+  "jobTitle": "Founder and Engineer",
+  "worksFor": { "@type": "Organization", "name": "Aircrate", "url": "https://air-crate.com" },
+  "alumniOf": { "@type": "CollegeOrUniversity", "name": "Erasmus University Rotterdam" },
+  "address": { "@type": "PostalAddress", "addressLocality": "Paramaribo", "addressCountry": "SR" },
+  "sameAs": [
+    "https://github.com/giannisanni",
+    "https://www.linkedin.com/in/gianni-sanrochman-145498289/",
+    "https://huggingface.co/giannisan",
+    "https://air-crate.com"
+  ]
+}
+</script>
+<style>
+  :root {
+    --paper: #F4F5F1;
+    --ink: #12181D;
+    --muted: #5A6670;
+    --line: #C9CEC3;
+    --accent: #D9480F;
+    --chip: #ECEEE6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  .topbar {
+    border-bottom: 2px solid var(--ink);
+    padding: 14px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--ink);
+  }
+  .topbar .dot { color: var(--accent); }
+
+  .hero { padding: 72px 0 40px; }
+  .eyebrow { color: var(--accent); margin-bottom: 20px; }
+  h1 {
+    font-family: "Archivo Black", "Archivo", sans-serif;
+    font-size: clamp(52px, 11vw, 128px);
+    line-height: 0.92;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    max-width: 12ch;
+  }
+  .role {
+    margin-top: 28px;
+    font-size: clamp(19px, 2.4vw, 24px);
+    font-weight: 500;
+    max-width: 34ch;
+    line-height: 1.35;
+  }
+  .bio {
+    margin-top: 20px;
+    color: var(--muted);
+    max-width: 62ch;
+  }
+  .bio strong { color: var(--ink); font-weight: 600; }
+
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 36px; }
+  .links a {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--chip);
+    border: 1px solid var(--ink);
+    padding: 10px 16px;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .links a:hover, .links a:focus-visible { background: var(--ink); color: var(--paper); }
+  .links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .manifest { padding: 48px 0 8px; }
+  .manifest-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 10px;
+  }
+  h2 {
+    font-family: "Archivo Black", "Archivo", sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .manifest-head .count { color: var(--muted); }
+
+  .item {
+    display: grid;
+    grid-template-columns: 88px 220px 1fr;
+    gap: 20px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .item .no { color: var(--accent); }
+  .item h3 { font-size: 17px; font-weight: 700; letter-spacing: 0.01em; }
+  .item h3 a { color: inherit; text-decoration: none; border-bottom: 2px solid var(--accent); }
+  .item h3 a:hover, .item h3 a:focus-visible { background: var(--accent); color: var(--paper); }
+  .item p { color: var(--muted); font-size: 15.5px; }
+  .item p em { font-style: normal; color: var(--ink); font-weight: 500; }
+
+  .method { padding: 40px 0 56px; }
+  .method p { max-width: 62ch; color: var(--muted); margin-top: 14px; }
+  .method p strong { color: var(--ink); font-weight: 600; }
+
+  footer {
+    border-top: 2px solid var(--ink);
+    padding: 20px 0 48px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--muted);
+  }
+  footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
+  footer a:hover { background: var(--accent); color: var(--paper); }
+
+  @media (max-width: 720px) {
+    .item { grid-template-columns: 56px 1fr; }
+    .item p { grid-column: 2; }
+    .hero { padding: 48px 0 32px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="topbar mono">
+    <span>Gianni Sanrochman <span class="dot">//</span> giannisan.com</span>
+    <span>Paramaribo, Suriname <span class="dot">//</span> 5.85 N, 55.20 W</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow mono">Builder's manifest, rev. 2026</p>
+    <h1>Gianni Sanrochman</h1>
+    <p class="role">AI-native builder. I direct AI coding agents to ship production systems: I own the problem, the architecture, the verification, and the pager.</p>
+    <p class="bio">I founded and run <strong>Aircrate</strong>, a freight forwarder connecting the USA and China to Suriname, on a stack I built end to end. I maintain <strong>pulsar</strong>, an open-source Rust and CUDA engine that streams 743B-parameter models from SSD through two consumer GPUs. MSc in Psychology from Erasmus University Rotterdam, interdisciplinary track on digitalisation in work and society.</p>
+    <nav class="links" aria-label="Profiles">
+      <a href="https://github.com/giannisanni">GitHub</a>
+      <a href="https://huggingface.co/giannisan">Hugging Face</a>
+      <a href="https://www.linkedin.com/in/gianni-sanrochman-145498289/">LinkedIn</a>
+      <a href="https://air-crate.com">Aircrate</a>
+      <a href="mailto:gianni@giannisan.com">Email</a>
+    </nav>
+  </section>
+
+  <section class="manifest" aria-label="Current work">
+    <div class="manifest-head">
+      <h2>Cargo on board</h2>
+      <span class="count mono">6 line items</span>
+    </div>
+
+    <div class="item">
+      <span class="no mono">Line 01</span>
+      <h3><a href="https://air-crate.com">Aircrate</a></h3>
+      <p>Freight forwarding from the USA and China to Suriname. Storefront, quoting, multi-rail payments, tracking, operator tooling. Runs on <em>three-tier high-availability PostgreSQL</em>; the last line of defense is a Raspberry Pi.</p>
+    </div>
+
+    <div class="item">
+      <span class="no mono">Line 02</span>
+      <h3><a href="https://github.com/giannisanni/pulsar">pulsar</a></h3>
+      <p>SSD-streaming inference engine for giant mixture-of-experts models, in Rust and CUDA. Runs <em>743B-parameter models on two consumer 16 GB GPUs</em>. Benchmark-gated development, 200+ stars.</p>
+    </div>
+
+    <div class="item">
+      <span class="no mono">Line 03</span>
+      <h3><a href="https://github.com/giannisanni/neutronstar">neutronstar</a></h3>
+      <p>CUDA evolution of antirez's ds4: io_uring expert streaming, cross-layer prefetch, and the <em>first MTP speculative decoding for GLM 5.2</em>.</p>
+    </div>
+
+    <div class="item">
+      <span class="no mono">Line 04</span>
+      <h3><a href="https://github.com/giannisanni/protostar">protostar</a></h3>
+      <p>Continual-learning research: a 134M-parameter model that <em>retains 77% of learned skills</em> across sequential consolidations, via replay-gated memory.</p>
+    </div>
+
+    <div class="item">
+      <span class="no mono">Line 05</span>
+      <h3><a href="https://github.com/giannisanni/encoder-free-speech">encoder-free-speech</a></h3>
+      <p>Speech research on Gemma: audio understanding and generation without a separate encoder stack. Paper writeup in the repo, <em>WER-gated results</em>.</p>
+    </div>
+
+    <div class="item">
+      <span class="no mono">Line 06</span>
+      <h3><a href="https://github.com/giannisanni/agora">agora</a></h3>
+      <p>A Rust MCP hub that links AI coding agents across machines and harnesses, with <em>exactly-once message delivery</em>. My agents use it to work as a team.</p>
+    </div>
+  </section>
+
+  <section class="method">
+    <h2>Method</h2>
+    <p>Everything above ships the same way: <strong>iterative and measured</strong>. Held-out benchmarks decide what lands, controls are built in by default, and negative results stay in the record. AI writes most of the code; I decide what is true.</p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span class="mono">Manifest no. 001 <span style="color:var(--accent)">//</span> Paramaribo</span>
+  <span class="mono"><a href="mailto:gianni@giannisan.com">gianni@giannisan.com</a></span>
+</footer>
+
+</body>
+</html>
