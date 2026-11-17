@@ -159,6 +159,8 @@
   .item h3 a:hover, .item h3 a:focus-visible { background: var(--accent); color: var(--paper); }
   .item p { color: var(--muted); font-size: 15.5px; }
   .item p em { font-style: normal; color: var(--ink); font-weight: 500; }
+  .item p a { color: var(--ink); text-underline-offset: 3px; }
+  .item p a:hover, .item p a:focus-visible { background: var(--accent); color: var(--paper); }
 
   .method { padding: 40px 0 56px; }
   .method p { max-width: 62ch; color: var(--muted); margin-top: 14px; }
@@ -238,6 +240,7 @@
     <p class="role"><span class="hl">I just love building.</span> Lately: a freight company, an inference engine, an operating system. I own the problem, the architecture, the verification, and the pager.</p>
     <p class="bio">I founded and run <strong>Aircrate</strong>, a freight forwarder connecting the USA and China to Suriname, on a stack I built end to end. I maintain <strong>pulsar</strong>, an open-source Rust and CUDA engine that streams 743B-parameter models from SSD through two consumer GPUs. MSc in Psychology from Erasmus University Rotterdam, interdisciplinary track on digitalisation in work and society.</p>
     <nav class="links" aria-label="Profiles">
+      <a href="#papers">Papers</a>
       <a href="https://github.com/giannisanni">GitHub</a>
       <a href="https://huggingface.co/giannisan">Hugging Face</a>
       <a href="https://www.linkedin.com/in/gianni-sanrochman-145498289/">LinkedIn</a>
@@ -269,17 +272,28 @@
 
     <div class="item">
       <h3><a href="https://github.com/giannisanni/protostar">protostar</a></h3>
-      <p>Continual-learning research: a 134M-parameter model that <em>retains 77% of learned skills</em> across sequential consolidations, via replay-gated memory.</p>
+      <p>Continual-learning research: a 134M-parameter model that learns a day's facts by reading them, then <em>dreams about them at night</em> and consolidates the dreams into memory, with no ground truth.</p>
     </div>
 
     <div class="item">
       <h3><a href="https://github.com/giannisanni/encoder-free-speech">encoder-free-speech</a></h3>
-      <p>Speech research on Gemma: audio understanding and generation without a separate encoder stack. Paper writeup in the repo, <em>WER-gated results</em>.</p>
+      <p>Speech research on Gemma: audio understanding and generation without a separate encoder stack. <em>WER-gated results</em>. <a href="papers/encoder-free-speech.pdf">Paper (PDF)</a>.</p>
     </div>
 
     <div class="item">
       <h3><a href="https://github.com/giannisanni/agora">agora</a></h3>
       <p>A Rust MCP hub that links AI coding agents across machines and harnesses, with <em>exactly-once message delivery</em>. My agents use it to work as a team.</p>
+    </div>
+  </section>
+
+  <section class="manifest" id="papers" aria-label="Papers">
+    <div class="manifest-head">
+      <h2>Papers</h2>
+    </div>
+
+    <div class="item">
+      <h3><a href="papers/encoder-free-speech.pdf">Conversational Speech Generation on an Encoder-Free Multimodal Backbone</a></h3>
+      <p>Teaching a frozen Gemma backbone to hold a spoken conversation with lightweight adapters and a speech head, <em>gated on word error rate</em>. June 2026.</p>
     </div>
   </section>
 
