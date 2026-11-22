@@ -125,7 +125,7 @@ function build() {
       item.add(leaf);
     }
     turn.add(item);
-    drops.push({ item, head: isRose ? head : null, d: 0.18 * i + r() * 0.3 });
+    drops.push({ item, head: isRose ? head : null, s: head.scale.x, d: 0.18 * i + r() * 0.3 });
   }
   document.getElementById('seed').textContent = '#' + seed;
   t0 = performance.now();
@@ -143,7 +143,10 @@ function frame(now) {
   const t = frozen ?? (still ? 99 : (now - t0) / 1000), dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
   for (const d of drops) {
     d.item.position.y = 3.2 * (1 - ease((t - d.d) / 1.4)); // flowers drop into the vase...
-    if (d.head) bloom(d.head, ease((t - d.d - 1.3) / 2.6)); // ...then open once they are seated
+    if (d.head) { // ...then open once they are seated: a small tight bud swells into a full rose
+      const k = ease((t - d.d - 1.2) / 2.4);
+      bloom(d.head, k); d.head.scale.setScalar(d.s * (0.45 + 0.55 * k));
+    }
   }
   if (!still && frozen === null) { spin += dt * 0.35 + vel; vel *= 0.94; }
   turn.rotation.y = frozen !== null ? frozen * 0.35 + spin : spin;
