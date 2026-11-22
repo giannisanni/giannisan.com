@@ -36,7 +36,7 @@ const SS = 2;
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const params = new URLSearchParams(location.search);
 const frozen = params.has('t') ? +params.get('t') : null; // ?t=6 renders one fixed moment
-const ascii = Ascii(document.getElementById('c'), { fontPx: (W, H) => Math.max(4.5, Math.min(7, W / 240)) });
+const ascii = Ascii(document.getElementById('c'), { fontPx: (W, H) => Math.max(3.6, Math.min(5.5, W / 330)), ramp: " .,:;i1tfLCG08@", lineHeight: 1.15 });
 
 const PALETTE = [ // light, body, tip; spotted?
   [[255,160,130],[236,30,46],[184,12,34], 1],
@@ -69,7 +69,7 @@ function build() {
   const green = () => [40 + r() * 50, 120 + r() * 80, 30 + r() * 40];
 
   const heads = [];
-  for (let i = 0; i < 16; i++) { // best-candidate sampling: even coverage of the oval, still organic
+  for (let i = 0; i < 13; i++) { // best-candidate sampling: even coverage of the oval, still organic
     let best, bd = -1;
     for (let k = 0; k < 24; k++) {
       const a = r() * 6.283, d = Math.sqrt(r()), p = [cx + Math.cos(a) * rx * d, oy + Math.sin(a) * ry * d];
@@ -87,16 +87,20 @@ function build() {
   const off0 = (r() * PALETTE.length) | 0; // cycle the palette so every bouquet is mixed
   for (const [i, [hx, hy]] of heads.entries()) {
     const pal = PALETTE[(off0 + i * 3) % PALETTE.length];
-    flowers.push({ stem: stemTo(hx, hy, r() * 0.5), L: S * (0.13 + r() * 0.06), pal, rot: r() * 6.28, axis: r() * 6.28, squash: 0.5 + r() * 0.5,
+    flowers.push({ stem: stemTo(hx, hy, r() * 0.5), L: S * (0.15 + r() * 0.05), pal, rot: r() * 6.28, axis: r() * 6.28, squash: 0.5 + r() * 0.5,
       d: 1.4 + r() * 2.2, spots: pal[3] ? Array.from({ length: 5 }, () => [0.12 + r() * 0.3, (r() - 0.5) * 0.5]) : [] });
   }
   for (let i = 0; i < 5; i++) {
     const a = -Math.PI / 2 + (r() - 0.5) * 2.2;
     buds.push({ stem: stemTo(cx + Math.cos(a) * rx * 1.05, oy + Math.sin(a) * ry * 1.05, r() * 0.6), L: S * (0.06 + r() * 0.03), pal: PALETTE[(r() * PALETTE.length) | 0], d: 2 + r() * 2 });
   }
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 14; i++) {
     const a = -Math.PI / 2 + (r() - 0.5) * 2;
-    leaves.push({ x: cx + (r() - 0.5) * S * 0.14, y: base, a, len: S * (0.12 + r() * 0.24), w: S * (0.01 + r() * 0.014), bend: (a + Math.PI / 2) * 0.7, col: green(), d: r() * 0.8, ph: r() * 6.28 });
+    leaves.push({ x: cx + (r() - 0.5) * S * 0.14, y: base, a, len: S * (0.1 + r() * 0.16), w: S * (0.008 + r() * 0.01), bend: (a + Math.PI / 2) * 0.7, col: green(), d: r() * 0.8, ph: r() * 6.28 });
+  }
+  for (const s of stems) if (r() < 0.7) { // a broad leaf partway up the stem
+    const u = 0.3 + r() * 0.35, side = r() < 0.5 ? -1 : 1, d = s.d + 0.6 + u;
+    leaves.push({ stem: s, u, a: -Math.PI / 2 + side * (0.5 + r() * 0.5), len: S * (0.1 + r() * 0.08), w: S * (0.014 + r() * 0.01), bend: side * 0.5, col: green(), d, ph: r() * 6.28 });
   }
   flowers.sort((a, b) => a.stem.y1 - b.stem.y1); // lower heads overlap the ones above them
   bouquet = { S, stems, flowers, leaves, buds };
@@ -113,21 +117,24 @@ const swayOf = (s, t) => still ? 0 : Math.sin(t * 0.7 + s.ph) * bouquet.S * 0.00
 
 function petal(f, L, w, pal, a) {
   o.save(); o.rotate(a);
-  const gr = o.createLinearGradient(0, 0, L, 0);
-  gr.addColorStop(0, rgb([pal[1][0] * 0.35 + 40, pal[1][1] * 0.35 + 55, 25]));
-  gr.addColorStop(0.16, rgb(pal[0])); gr.addColorStop(0.5, rgb(pal[1])); gr.addColorStop(1, rgb(pal[2]));
-  o.fillStyle = gr;
-  o.beginPath(); o.moveTo(0, 0);
-  o.bezierCurveTo(L * 0.22, -w, L * 0.68, -w * 0.85, L, w * 0.12); // slightly curled tip
-  o.bezierCurveTo(L * 0.68, w * 0.85, L * 0.22, w, 0, 0);
-  o.fill();
-  o.strokeStyle = 'rgba(0,0,0,0.55)'; o.lineWidth = L * 0.025; o.stroke();
-  o.lineWidth = L * 0.022;
-  o.strokeStyle = rgb(pal[0], 0.7); o.beginPath(); o.moveTo(L * 0.08, 0); o.quadraticCurveTo(L * 0.5, -w * 0.06, L * 0.9, w * 0.1); o.stroke();
-  o.strokeStyle = rgb(pal[2], 0.6);
-  for (const s of [-0.45, 0.45]) { o.beginPath(); o.moveTo(L * 0.15, 0); o.quadraticCurveTo(L * 0.5, w * s, L * 0.82, w * s * 0.3); o.stroke(); }
-  o.fillStyle = rgb(pal[2].map(v => v * 0.45));
-  for (const [u, v] of f.spots) { o.beginPath(); o.arc(L * u, w * v * (1 - u), L * 0.022, 0, 6.29); o.fill(); }
+  for (const side of [-1, 1]) { // two halves folded along the midrib: one catches the light, one is in shade
+    const k = side < 0 ? 1 : 0.68, gr = o.createLinearGradient(0, 0, L, 0);
+    gr.addColorStop(0, rgb([pal[1][0] * 0.3 + 40, pal[1][1] * 0.3 + 50, 22]));
+    gr.addColorStop(0.16, rgb(pal[0].map(v => v * k))); gr.addColorStop(0.5, rgb(pal[1].map(v => v * k))); gr.addColorStop(1, rgb(pal[2].map(v => v * k)));
+    o.fillStyle = gr;
+    o.beginPath(); o.moveTo(0, 0);
+    o.bezierCurveTo(L * 0.22, w * side, L * 0.68, w * 0.85 * side, L, w * 0.12);
+    o.quadraticCurveTo(L * 0.5, -w * 0.04, 0, 0);
+    o.fill();
+    o.strokeStyle = rgb(pal[2].map(v => v * 0.55 * k), 0.8); o.lineWidth = L * 0.014;
+    for (const v of [0.3, 0.6]) { o.beginPath(); o.moveTo(L * 0.1, 0); o.quadraticCurveTo(L * 0.45, w * v * side, L * 0.85, w * v * 0.35 * side); o.stroke(); }
+  }
+  o.strokeStyle = rgb(pal[0], 0.8); o.lineWidth = L * 0.018;
+  o.beginPath(); o.moveTo(L * 0.08, 0); o.quadraticCurveTo(L * 0.5, -w * 0.04, L * 0.93, w * 0.1); o.stroke();
+  o.strokeStyle = 'rgba(0,0,0,0.6)'; o.lineWidth = L * 0.02;
+  o.beginPath(); o.moveTo(0, 0); o.bezierCurveTo(L * 0.22, -w, L * 0.68, -w * 0.85, L, w * 0.12); o.bezierCurveTo(L * 0.68, w * 0.85, L * 0.22, w, 0, 0); o.stroke();
+  o.fillStyle = rgb(pal[2].map(v => v * 0.4));
+  for (const [u, v] of f.spots) { o.beginPath(); o.arc(L * u, w * v * (1 - u), L * 0.02, 0, 6.29); o.fill(); }
   o.restore();
 }
 
@@ -145,6 +152,7 @@ function paint(t) {
 
   for (const l of leaves) {
     const gk = ease((t - l.d) / 1.6); if (!gk) continue;
+    if (l.stem) [l.x, l.y] = quad(l.stem, l.u, swayOf(l.stem, t));
     const a = l.a + (still ? 0 : Math.sin(t * 0.9 + l.ph) * 0.03), len = l.len * gk, N = 12, Lp = [], Rp = [];
     for (let i = 0; i <= N; i++) {
       const u = i / N, ang = a + l.bend * u * u;
@@ -191,8 +199,8 @@ function paint(t) {
     }
     const open = (bloom - 0.2) / 0.8, L = f.L * (0.3 + 0.7 * open), rot = f.rot + (still ? 0 : Math.sin(t * 0.3 + s.ph) * 0.04);
     o.rotate(f.axis); o.scale(1, f.squash); o.rotate(-f.axis);
-    for (let k = 0; k < 6; k += 2) petal(f, L, L * 0.21, f.pal.map((c, i) => i < 3 ? c.map(v => v * 0.85) : c), rot + k * Math.PI / 3);
-    for (let k = 1; k < 6; k += 2) petal(f, L * 1.08, L * 0.26, f.pal, rot + k * Math.PI / 3);
+    for (let k = 0; k < 6; k += 2) petal(f, L, L * 0.27, f.pal.map((c, i) => i < 3 ? c.map(v => v * 0.85) : c), rot + k * Math.PI / 3);
+    for (let k = 1; k < 6; k += 2) petal(f, L * 1.06, L * 0.33, f.pal, rot + k * Math.PI / 3);
     o.lineWidth = L * 0.02;
     for (let k = 0; k < 6; k++) {
       const a = rot + k * Math.PI / 3 + 0.45 + (k % 2) * 0.2, sl = L * (0.55 + 0.12 * (k % 3)) * open;
