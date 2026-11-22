@@ -62,9 +62,15 @@ void main() {
     gl.uniform2f(U('uGrid'), grid.cols, grid.rows); gl.uniform2f(U('uCell'), cw, ch); gl.uniform2f(U('uRes'), canvas.width, canvas.height);
     return grid;
   }
-  function draw(src) { // src: any canvas; downscaled to one pixel per cell (bilinear 2x2 = box average)
+  // src: canvas or video, downscaled to one pixel per cell. With {fit: [w, h]} it is letterboxed to its own aspect;
+  // {fade: 0..1} dims it (loop seams).
+  function draw(src, { fit, fade = 1 } = {}) {
     sctx.clearRect(0, 0, grid.cols, grid.rows);
-    sctx.drawImage(src, 0, 0, grid.cols, grid.rows);
+    if (fit) {
+      const s = Math.min(grid.W / fit[0], grid.H / fit[1]), dw = fit[0] * s / grid.cw, dh = fit[1] * s / grid.ch;
+      sctx.drawImage(src, (grid.cols - dw) / 2, (grid.rows - dh) / 2, dw, dh);
+    } else sctx.drawImage(src, 0, 0, grid.cols, grid.rows);
+    if (fade < 1) { sctx.fillStyle = `rgba(0,0,0,${1 - fade})`; sctx.fillRect(0, 0, grid.cols, grid.rows); }
     gl.activeTexture(gl.TEXTURE0); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, small);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
