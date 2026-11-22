@@ -17,146 +17,154 @@
   html, body { margin: 0; height: 100%; background: #000; color: #8a8f88; overflow: hidden; }
   body { font: 12px/1.4 "IBM Plex Mono", ui-monospace, monospace; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; }
-  .ui { position: fixed; left: 16px; right: 16px; display: flex; justify-content: space-between; pointer-events: none; }
+  .ui { position: fixed; left: 16px; right: 16px; display: flex; justify-content: space-between; gap: 16px; pointer-events: none; }
   .top { top: 14px; } .bottom { bottom: 14px; }
   a { color: inherit; text-decoration: none; pointer-events: auto; }
-  a:hover, a:focus-visible { color: #f4f5f1; }
+  a:hover, a:focus-visible, a[aria-current] { color: #f4f5f1; }
   #hint { transition: opacity 1.2s; }
 </style>
 </head>
 <body>
 <canvas id="c" role="img" aria-label="An animated bouquet of lilies drawn in ASCII characters"></canvas>
-<div class="ui top"><span>flowers</span><a href="/">giannisan.com</a></div>
+<div class="ui top"><span><a href="./" aria-current="page">lilies</a> · <a href="roses/">roses</a></span><a href="/">giannisan.com</a></div>
 <div class="ui bottom"><span id="hint">tap for a new bouquet</span><span id="seed"></span></div>
+<script src="ascii.js"></script>
 <script>
-// A lily bouquet painted to a tiny offscreen canvas, then re-drawn as coloured text:
-// luminance picks the glyph, Sobel edges swap in - \ | / along outlines.
-const cv = document.getElementById('c'), g = cv.getContext('2d');
-const off = document.createElement('canvas'), o = off.getContext('2d', { willReadFrequently: true });
-const RAMP = " .:;+*oxO%#@";
-const EDGE = ['-', '\\', '|', '/'];
-const SS = 2; // offscreen supersampling per cell
+// Lilies painted to an offscreen canvas (2 px per text cell), then turned into text by ascii.js.
+const off = document.createElement('canvas'), o = off.getContext('2d');
+const SS = 2;
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const params = new URLSearchParams(location.search);
+const frozen = params.has('t') ? +params.get('t') : null; // ?t=6 renders one fixed moment
+const ascii = Ascii(document.getElementById('c'), { fontPx: (W, H) => Math.max(4.5, Math.min(7, W / 240)) });
 
-const PALETTE = [ // throat, body, edge
-  [[255,205,95],[228,32,48],[165,12,32]],
-  [[255,238,246],[236,72,162],[196,38,128]],
-  [[255,242,150],[250,206,42],[232,158,22]],
-  [[255,251,238],[246,228,210],[226,186,166]],
-  [[255,222,125],[250,142,52],[218,92,30]],
-  [[255,242,214],[240,182,142],[212,138,110]],
-  [[226,70,90],[150,16,42],[98,6,26]],
+const PALETTE = [ // light, body, tip; spotted?
+  [[255,160,130],[236,30,46],[184,12,34], 1],
+  [[255,200,235],[232,58,160],[176,30,120], 1],
+  [[255,246,170],[250,208,40],[214,150,18], 0],
+  [[255,252,240],[244,232,214],[214,196,176], 1],
+  [[255,226,170],[246,160,96],[206,104,56], 1],
+  [[230,60,70],[150,14,36],[92,4,22], 0],
+  [[255,236,246],[246,176,214],[220,90,160], 1],
 ];
 
-let W, H, cols, rows, cw, ch, font, bouquet, stars, t0, seed;
+let grid, bouquet, stars, t0, seed;
 
 function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
 const rgb = (c, a = 1) => `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
 
 function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  W = innerWidth; H = innerHeight;
-  cv.width = W * dpr; cv.height = H * dpr;
-  g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const fs = Math.max(5, Math.min(9, Math.sqrt(W * H / 32000))) // ~45k cells max; ponytail: fillText per cell, glyph atlas if it ever stutters;
-  font = `500 ${fs}px "IBM Plex Mono", ui-monospace, monospace`;
-  g.font = font;
-  cw = g.measureText('M').width; ch = fs * 1.05;
-  cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
-  off.width = cols * SS; off.height = rows * SS;
+  grid = ascii.resize();
+  off.width = grid.cols * SS; off.height = grid.rows * SS;
   build();
 }
 
-// World units = one cell width; y is stretched so shapes keep their real proportions.
+// World units = one cell width; y is stretched by cw/ch at paint time so shapes keep their proportions.
 function build() {
   const r = rng(seed);
-  const ww = cols, wh = rows * ch / cw;
-  const S = Math.min(ww * 0.92, wh * 0.84);
-  const cx = ww / 2, base = wh * 0.94 - Math.max(0, wh * 0.78 - S) * 0.35;
-  const pick = () => PALETTE[(r() * PALETTE.length) | 0];
-  const green = () => [40 + r() * 40, 120 + r() * 70, 40 + r() * 35];
+  const ww = grid.cols, wh = grid.rows * grid.ch / grid.cw;
+  const S = Math.min(ww * 0.92 / 0.72, wh * 0.84);         // bouquet height; it is ~0.72 S wide
+  const cx = ww / 2, base = wh / 2 + S * 0.5, oy = base - S * 0.6, rx = S * 0.3, ry = S * 0.34;
+  const green = () => [40 + r() * 50, 120 + r() * 80, 30 + r() * 40];
 
+  const heads = [];
+  for (let i = 0; i < 16; i++) { // best-candidate sampling: even coverage of the oval, still organic
+    let best, bd = -1;
+    for (let k = 0; k < 24; k++) {
+      const a = r() * 6.283, d = Math.sqrt(r()), p = [cx + Math.cos(a) * rx * d, oy + Math.sin(a) * ry * d];
+      const md = Math.min(...heads.map(h => Math.hypot(h[0] - p[0], h[1] - p[1])), 1e9);
+      if (md > bd) { bd = md; best = p; }
+    }
+    heads.push(best);
+  }
   const stems = [], flowers = [], leaves = [], buds = [];
-  const n = 7 + ((r() * 3) | 0);
-  for (let i = 0; i < n; i++) {
-    const a = Math.PI * (0.08 + 0.84 * (i + r() * 0.8) / n);
-    const rad = Math.sqrt(0.25 + r() * 0.75);
-    const hx = cx - Math.cos(a) * S * 0.42 * rad, hy = base - S * 0.6 - Math.sin(a) * S * 0.34 * rad + (r() - 0.5) * S * 0.08;
-    const sx = cx + (r() - 0.5) * S * 0.06;
-    const stem = { x0: sx, y0: base, x1: hx, y1: hy, kx: (sx + hx) / 2 + (r() - 0.5) * S * 0.08, ky: (base + hy) / 2, col: green(), d: r() * 0.6, ph: r() * 6.28 };
-    stems.push(stem);
-    flowers.push({ stem, L: S * (0.11 + r() * 0.05), pal: pick(), rot: r() * 6.28, axis: r() * 6.28, squash: 0.78 + r() * 0.22, d: 1.6 + r() * 1.8 });
+  const stemTo = (hx, hy, d) => {
+    const sx = cx + (r() - 0.5) * S * 0.07;
+    const s = { x0: sx, y0: base, x1: hx, y1: hy, kx: sx + (hx - sx) * 0.15, ky: hy + (base - hy) * 0.55, col: green(), d, ph: r() * 6.28 };
+    stems.push(s); return s;
+  };
+  const off0 = (r() * PALETTE.length) | 0; // cycle the palette so every bouquet is mixed
+  for (const [i, [hx, hy]] of heads.entries()) {
+    const pal = PALETTE[(off0 + i * 3) % PALETTE.length];
+    flowers.push({ stem: stemTo(hx, hy, r() * 0.5), L: S * (0.13 + r() * 0.06), pal, rot: r() * 6.28, axis: r() * 6.28, squash: 0.5 + r() * 0.5,
+      d: 1.4 + r() * 2.2, spots: pal[3] ? Array.from({ length: 5 }, () => [0.12 + r() * 0.3, (r() - 0.5) * 0.5]) : [] });
   }
   for (let i = 0; i < 5; i++) {
-    const side = i % 2 ? 1 : -1, hx = cx + side * S * (0.1 + r() * 0.36), hy = base - S * (0.72 + r() * 0.2);
-    const sx = cx + (r() - 0.5) * S * 0.05;
-    const stem = { x0: sx, y0: base, x1: hx, y1: hy, kx: (sx + hx) / 2, ky: (base + hy) / 2, col: green(), d: r() * 0.8, ph: r() * 6.28 };
-    stems.push(stem);
-    buds.push({ stem, L: S * (0.05 + r() * 0.035), pal: pick(), d: 2.5 + r() * 2 });
+    const a = -Math.PI / 2 + (r() - 0.5) * 2.2;
+    buds.push({ stem: stemTo(cx + Math.cos(a) * rx * 1.05, oy + Math.sin(a) * ry * 1.05, r() * 0.6), L: S * (0.06 + r() * 0.03), pal: PALETTE[(r() * PALETTE.length) | 0], d: 2 + r() * 2 });
   }
-  for (let i = 0; i < 22; i++) {
-    const a = -Math.PI / 2 + (r() - 0.5) * 2.1;
-    leaves.push({ x: cx + (r() - 0.5) * S * 0.12, y: base, a, len: S * (0.18 + r() * 0.3), w: S * (0.014 + r() * 0.018), bend: (a + Math.PI / 2) * 0.6, col: green(), d: r() * 0.9, ph: r() * 6.28 });
+  for (let i = 0; i < 28; i++) {
+    const a = -Math.PI / 2 + (r() - 0.5) * 2;
+    leaves.push({ x: cx + (r() - 0.5) * S * 0.14, y: base, a, len: S * (0.12 + r() * 0.24), w: S * (0.01 + r() * 0.014), bend: (a + Math.PI / 2) * 0.7, col: green(), d: r() * 0.8, ph: r() * 6.28 });
   }
-  flowers.sort((a, b) => a.L - b.L); // small ones read as further back
+  flowers.sort((a, b) => a.stem.y1 - b.stem.y1); // lower heads overlap the ones above them
   bouquet = { S, stems, flowers, leaves, buds };
-  stars = Array.from({ length: Math.round(cols * rows / 90) }, () => ({ c: (r() * cols) | 0, r: (r() * rows) | 0, p: r() * 6.28, s: 0.3 + r() * 1.2 }));
+  stars = Array.from({ length: Math.round(grid.cols * grid.rows / 140) }, () => [r() * grid.cols | 0, r() * grid.rows | 0, r() * 6.28, 0.3 + r() * 1.2]);
   t0 = performance.now();
-  document.getElementById('seed').textContent = '#' + (seed >>> 0).toString(16).slice(-5);
+  document.getElementById('seed').textContent = '#' + seed;
 }
 
 function quad(s, u, sway) {
-  const v = 1 - u, x1 = s.x1 + sway, kx = s.kx + sway * 0.4;
+  const v = 1 - u, x1 = s.x1 + sway, kx = s.kx + sway * 0.3;
   return [v * v * s.x0 + 2 * v * u * kx + u * u * x1, v * v * s.y0 + 2 * v * u * s.ky + u * u * s.y1];
 }
-const swayOf = (s, t) => still ? 0 : Math.sin(t * 0.7 + s.ph) * bouquet.S * 0.012;
+const swayOf = (s, t) => still ? 0 : Math.sin(t * 0.7 + s.ph) * bouquet.S * 0.008;
 
-function petal(L, w, pal, a) {
+function petal(f, L, w, pal, a) {
   o.save(); o.rotate(a);
   const gr = o.createLinearGradient(0, 0, L, 0);
-  gr.addColorStop(0, rgb(pal[0])); gr.addColorStop(0.32, rgb(pal[1])); gr.addColorStop(1, rgb(pal[2]));
+  gr.addColorStop(0, rgb([pal[1][0] * 0.35 + 40, pal[1][1] * 0.35 + 55, 25]));
+  gr.addColorStop(0.16, rgb(pal[0])); gr.addColorStop(0.5, rgb(pal[1])); gr.addColorStop(1, rgb(pal[2]));
   o.fillStyle = gr;
   o.beginPath(); o.moveTo(0, 0);
-  o.bezierCurveTo(L * 0.25, -w, L * 0.7, -w * 0.9, L, 0);
-  o.bezierCurveTo(L * 0.7, w * 0.9, L * 0.25, w, 0, 0);
+  o.bezierCurveTo(L * 0.22, -w, L * 0.68, -w * 0.85, L, w * 0.12); // slightly curled tip
+  o.bezierCurveTo(L * 0.68, w * 0.85, L * 0.22, w, 0, 0);
   o.fill();
-  o.strokeStyle = 'rgba(0,0,0,0.7)'; o.lineWidth = L * 0.035; o.stroke();
-  o.strokeStyle = rgb(pal[0], 0.55); o.lineWidth = L * 0.03;
-  o.beginPath(); o.moveTo(L * 0.1, 0); o.quadraticCurveTo(L * 0.5, -w * 0.08, L * 0.85, 0); o.stroke();
+  o.strokeStyle = 'rgba(0,0,0,0.55)'; o.lineWidth = L * 0.025; o.stroke();
+  o.lineWidth = L * 0.022;
+  o.strokeStyle = rgb(pal[0], 0.7); o.beginPath(); o.moveTo(L * 0.08, 0); o.quadraticCurveTo(L * 0.5, -w * 0.06, L * 0.9, w * 0.1); o.stroke();
+  o.strokeStyle = rgb(pal[2], 0.6);
+  for (const s of [-0.45, 0.45]) { o.beginPath(); o.moveTo(L * 0.15, 0); o.quadraticCurveTo(L * 0.5, w * s, L * 0.82, w * s * 0.3); o.stroke(); }
+  o.fillStyle = rgb(pal[2].map(v => v * 0.45));
+  for (const [u, v] of f.spots) { o.beginPath(); o.arc(L * u, w * v * (1 - u), L * 0.022, 0, 6.29); o.fill(); }
   o.restore();
 }
 
 function paint(t) {
-  const { S, stems, flowers, leaves, buds } = bouquet;
+  const { S, stems, flowers, leaves, buds } = bouquet, { cw, ch } = grid;
   o.setTransform(1, 0, 0, 1, 0, 0);
   o.fillStyle = '#000'; o.fillRect(0, 0, off.width, off.height);
+  o.setTransform(SS, 0, 0, SS, 0, 0);
+  for (const [x, y, p, sp] of stars) { // twinkling one-cell stars
+    const a = still ? 0.4 : (0.5 + 0.5 * Math.sin(t * sp + p)) * Math.min(1, t / 3);
+    if (a > 0.2) { o.fillStyle = `rgba(190,200,230,${a * 0.5})`; o.fillRect(x, y, 1, 1); }
+  }
   o.setTransform(SS, 0, 0, SS * cw / ch, 0, 0);
   o.lineCap = 'round';
 
   for (const l of leaves) {
     const gk = ease((t - l.d) / 1.6); if (!gk) continue;
-    const sw = still ? 0 : Math.sin(t * 0.9 + l.ph) * 0.04;
-    const len = l.len * gk, a = l.a + sw, N = 12, L = [], R = [];
+    const a = l.a + (still ? 0 : Math.sin(t * 0.9 + l.ph) * 0.03), len = l.len * gk, N = 12, Lp = [], Rp = [];
     for (let i = 0; i <= N; i++) {
       const u = i / N, ang = a + l.bend * u * u;
       const px = l.x + Math.cos(a) * len * u + Math.cos(ang) * len * u * u * 0.3;
       const py = l.y + Math.sin(a) * len * u + Math.sin(ang) * len * u * u * 0.3;
       const hw = l.w * Math.sin(Math.PI * Math.min(1, u * 1.15)) * (1 - u * 0.4);
-      L.push([px - Math.sin(ang) * hw, py + Math.cos(ang) * hw]); R.push([px + Math.sin(ang) * hw, py - Math.cos(ang) * hw]);
+      Lp.push([px - Math.sin(ang) * hw, py + Math.cos(ang) * hw]); Rp.push([px + Math.sin(ang) * hw, py - Math.cos(ang) * hw]);
     }
-    const gr = o.createLinearGradient(l.x, l.y, L[N][0], L[N][1]);
-    gr.addColorStop(0, rgb(l.col.map(v => v * 0.6))); gr.addColorStop(1, rgb(l.col.map(v => Math.min(255, v * 1.25))));
-    o.fillStyle = gr; o.beginPath(); o.moveTo(...L[0]);
-    for (const p of L) o.lineTo(...p);
-    for (const p of R.reverse()) o.lineTo(...p);
+    const gr = o.createLinearGradient(l.x, l.y, Lp[N][0], Lp[N][1]);
+    gr.addColorStop(0, rgb(l.col.map(v => v * 0.5))); gr.addColorStop(1, rgb(l.col.map(v => Math.min(255, v * 1.35))));
+    o.fillStyle = gr; o.beginPath(); o.moveTo(...Lp[0]);
+    for (const p of Lp) o.lineTo(...p);
+    for (const p of Rp.reverse()) o.lineTo(...p);
     o.fill();
   }
 
   for (const s of stems) {
     const gk = ease((t - s.d) / 1.8); if (!gk) continue;
     const sw = swayOf(s, t);
-    o.strokeStyle = rgb(s.col); o.lineWidth = S * 0.011;
+    o.strokeStyle = rgb(s.col); o.lineWidth = S * 0.006;
     o.beginPath(); o.moveTo(s.x0, s.y0);
     for (let i = 1; i <= 24; i++) o.lineTo(...quad(s, gk * i / 24, sw));
     o.stroke();
@@ -164,88 +172,56 @@ function paint(t) {
 
   for (const b of buds) {
     const gk = ease((t - b.d) / 1.5); if (!gk) continue;
-    const s = b.stem, sw = swayOf(s, t), [x, y] = quad(s, 1, sw), [px, py] = quad(s, 0.96, sw);
+    const s = b.stem, sw = swayOf(s, t), [x, y] = quad(s, 1, sw), [px, py] = quad(s, 0.95, sw);
     o.save(); o.translate(x, y); o.rotate(Math.atan2(y - py, x - px));
     const gr = o.createLinearGradient(0, 0, b.L, 0);
     gr.addColorStop(0, rgb(s.col)); gr.addColorStop(1, rgb(b.pal[1]));
-    o.fillStyle = gr; o.beginPath(); o.ellipse(b.L * 0.5 * gk, 0, b.L * 0.55 * gk, b.L * 0.16 * gk, 0, 0, 6.29); o.fill();
+    o.fillStyle = gr; o.beginPath(); o.ellipse(b.L * 0.5 * gk, 0, b.L * 0.55 * gk, b.L * 0.17 * gk, 0, 0, 6.29); o.fill();
     o.restore();
   }
 
   for (const f of flowers) {
-    const s = f.stem, sw = swayOf(s, t), gk = ease((t - s.d) / 1.8);
-    if (gk < 1) continue;
+    const s = f.stem, sw = swayOf(s, t);
+    if (ease((t - s.d) / 1.8) < 1) continue;
     const bloom = ease((t - f.d) / 2.2), [x, y] = quad(s, 1, sw);
     o.save(); o.translate(x, y);
-    if (bloom < 0.25) { // still a bud on top of the stem
-      o.fillStyle = rgb(f.pal[1]); o.beginPath(); o.ellipse(0, -f.L * 0.2, f.L * 0.12, f.L * 0.3, 0, 0, 6.29); o.fill();
+    if (bloom < 0.2) {
+      o.fillStyle = rgb(f.pal[1]); o.beginPath(); o.ellipse(0, -f.L * 0.2, f.L * 0.1, f.L * 0.28, 0, 0, 6.29); o.fill();
       o.restore(); continue;
     }
-    const open = (bloom - 0.25) / 0.75, L = f.L * (0.35 + 0.65 * open), rot = f.rot + (still ? 0 : Math.sin(t * 0.3 + s.ph) * 0.05);
+    const open = (bloom - 0.2) / 0.8, L = f.L * (0.3 + 0.7 * open), rot = f.rot + (still ? 0 : Math.sin(t * 0.3 + s.ph) * 0.04);
     o.rotate(f.axis); o.scale(1, f.squash); o.rotate(-f.axis);
-    for (let k = 0; k < 6; k += 2) petal(L, L * 0.3, f.pal.map(c => c.map(v => v * 0.86)), rot + k * Math.PI / 3);
-    for (let k = 1; k < 6; k += 2) petal(L * 1.04, L * 0.36, f.pal, rot + k * Math.PI / 3);
-    o.fillStyle = 'rgb(200,230,140)'; o.beginPath(); o.arc(0, 0, L * 0.09, 0, 6.29); o.fill();
-    o.lineWidth = L * 0.025;
+    for (let k = 0; k < 6; k += 2) petal(f, L, L * 0.21, f.pal.map((c, i) => i < 3 ? c.map(v => v * 0.85) : c), rot + k * Math.PI / 3);
+    for (let k = 1; k < 6; k += 2) petal(f, L * 1.08, L * 0.26, f.pal, rot + k * Math.PI / 3);
+    o.lineWidth = L * 0.02;
     for (let k = 0; k < 6; k++) {
-      const a = rot + k * Math.PI / 3 + 0.5, sl = L * 0.55 * open;
-      o.strokeStyle = 'rgb(225,235,190)'; o.beginPath(); o.moveTo(0, 0); o.lineTo(Math.cos(a) * sl, Math.sin(a) * sl); o.stroke();
-      o.fillStyle = 'rgb(150,60,20)'; o.beginPath(); o.ellipse(Math.cos(a) * sl, Math.sin(a) * sl, L * 0.07, L * 0.03, a + 1.57, 0, 6.29); o.fill();
+      const a = rot + k * Math.PI / 3 + 0.45 + (k % 2) * 0.2, sl = L * (0.55 + 0.12 * (k % 3)) * open;
+      o.strokeStyle = 'rgb(205,225,170)'; o.beginPath(); o.moveTo(0, 0); o.quadraticCurveTo(Math.cos(a) * sl * 0.6, Math.sin(a) * sl * 0.6 - L * 0.08, Math.cos(a) * sl, Math.sin(a) * sl); o.stroke();
+      o.fillStyle = 'rgb(130,50,20)'; o.beginPath(); o.ellipse(Math.cos(a) * sl, Math.sin(a) * sl, L * 0.065, L * 0.025, a + 1.57, 0, 6.29); o.fill();
     }
     o.restore();
   }
 }
 
-function draw(now) {
-  const t = (now - t0) / 1000;
-  paint(still ? 99 : t);
-  const px = o.getImageData(0, 0, off.width, off.height).data, ow = off.width;
-  const n = cols * rows, R = new Float32Array(n), G = new Float32Array(n), B = new Float32Array(n), Y = new Float32Array(n);
-  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
-    let r = 0, gg = 0, b = 0;
-    for (let j = 0; j < SS; j++) for (let i = 0; i < SS; i++) { const p = ((y * SS + j) * ow + x * SS + i) * 4; r += px[p]; gg += px[p + 1]; b += px[p + 2]; }
-    const k = y * cols + x, q = SS * SS;
-    R[k] = r / q; G[k] = gg / q; B[k] = b / q;
-    Y[k] = (0.299 * R[k] + 0.587 * G[k] + 0.114 * B[k]) / 255;
-  }
-  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-  g.font = font; g.textBaseline = 'top';
-
-  for (const s of stars) {
-    const k = s.r * cols + s.c; if (Y[k] > 0.04) continue;
-    const a = still ? 0.4 : (0.5 + 0.5 * Math.sin(t * s.s + s.p)) * Math.min(1, t / 3);
-    if (a < 0.15) continue;
-    g.fillStyle = `rgba(200,205,220,${a * 0.6})`; g.fillText(a > 0.85 ? '+' : '.', s.c * cw, s.r * ch);
-  }
-
-  const nr = RAMP.length;
-  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
-    const k = y * cols + x, l = Y[k]; if (l < 0.05) continue;
-    let glyph = RAMP[Math.min(nr - 1, Math.max(1, (l * (nr - 1) + 0.5) | 0))];
-    if (x > 0 && y > 0 && x < cols - 1 && y < rows - 1 && l > 0.12) {
-      const gx = Y[k - cols + 1] + 2 * Y[k + 1] + Y[k + cols + 1] - Y[k - cols - 1] - 2 * Y[k - 1] - Y[k + cols - 1];
-      const gy = Y[k + cols - 1] + 2 * Y[k + cols] + Y[k + cols + 1] - Y[k - cols - 1] - 2 * Y[k - cols] - Y[k - cols + 1];
-      if (Math.hypot(gx, gy) / 4 > 0.5) glyph = EDGE[(((Math.atan2(gy, gx) * 180 / Math.PI + 90 + 22.5) % 180 + 180) % 180 / 45) | 0];
-    }
-    const v = Math.max(R[k], G[k], B[k], 1), m = Math.min(255 / v, 1.35); // brighten, keep shading
-    g.fillStyle = `rgb(${Math.min(255, R[k] * m) | 0},${Math.min(255, G[k] * m) | 0},${Math.min(255, B[k] * m) | 0})`;
-    g.fillText(glyph, x * cw, y * ch);
-  }
-  if (!still) requestAnimationFrame(draw);
+function frame(now) {
+  const t = frozen ?? (still ? 99 : (now - t0) / 1000);
+  paint(t);
+  ascii.draw(off);
+  if (!still && frozen === null) requestAnimationFrame(frame);
 }
 
 function regrow() {
-  seed = (Math.random() * 2 ** 32) >>> 0;
+  seed = (Math.random() * 1e6) | 0;
   build();
   document.getElementById('hint').style.opacity = 0;
-  if (still) draw(performance.now());
+  if (still || frozen !== null) frame(performance.now());
 }
 
-seed = +(new URLSearchParams(location.search).get('seed') || (Math.random() * 2 ** 32)) >>> 0;
-addEventListener('resize', () => { resize(); if (still) draw(performance.now()); });
+seed = params.has('seed') ? +params.get('seed') | 0 : (Math.random() * 1e6) | 0;
+addEventListener('resize', () => { resize(); if (still || frozen !== null) frame(performance.now()); });
 addEventListener('click', e => { if (!e.target.closest('a')) regrow(); });
 addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') regrow(); });
-document.fonts.ready.then(() => { resize(); requestAnimationFrame(draw); });
+document.fonts.load('500 10px "IBM Plex Mono"').catch(() => {}).then(() => { resize(); requestAnimationFrame(frame); });
 </script>
 </body>
 </html>

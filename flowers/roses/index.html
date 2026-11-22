@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>flowers · roses</title>
+<meta name="description" content="A bouquet of roses in a glass vase, rendered in 3D and drawn in text.">
+<meta property="og:title" content="flowers · roses">
+<meta property="og:description" content="Every flower you see is made of text characters.">
+<meta property="og:url" content="https://giannisan.com/flowers/roses/">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Ctext x='32' y='46' font-family='monospace' font-size='40' fill='%23e8466e' text-anchor='middle'%3E@%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #8a8f88; overflow: hidden; }
+  body { font: 12px/1.4 "IBM Plex Mono", ui-monospace, monospace; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  body:active { cursor: grabbing; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; }
+  .ui { position: fixed; left: 16px; right: 16px; display: flex; justify-content: space-between; gap: 16px; pointer-events: none; }
+  .top { top: 14px; } .bottom { bottom: 14px; }
+  a { color: inherit; text-decoration: none; pointer-events: auto; }
+  a:hover, a:focus-visible, a[aria-current] { color: #f4f5f1; }
+  #hint { transition: opacity 1.2s; }
+</style>
+</head>
+<body>
+<canvas id="c" role="img" aria-label="A slowly turning bouquet of roses in a glass vase, drawn in ASCII characters"></canvas>
+<div class="ui top"><span><a href="../">lilies</a> · <a href="./" aria-current="page">roses</a></span><a href="/">giannisan.com</a></div>
+<div class="ui bottom"><span id="hint">drag to turn · tap for a new bouquet</span><span id="seed"></span></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<script src="../ascii.js"></script>
+<script>
+// A real 3D bouquet rendered small with three.js; ascii.js turns every frame into text.
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const params = new URLSearchParams(location.search);
+const frozen = params.has('t') ? +params.get('t') : null; // ?t=6 renders one fixed moment
+const ascii = Ascii(document.getElementById('c'), { fontPx: (W, H) => Math.max(5.5, Math.min(9, W / 170)), edge: 0.5 });
+
+const ROSES = [0xd0142c, 0xe8204a, 0x9e0a22, 0xff5c8a, 0xf7c6d0, 0xff7a59, 0xc2185b];
+const FILL = [0x3d5bff, 0x7a4dff, 0x2fa8ff, 0xf2f2ff];
+
+const gl = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+gl.setPixelRatio(1);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+scene.add(new THREE.AmbientLight(0x404058, 0.8));
+const key = new THREE.DirectionalLight(0xfff0e0, 1.2); key.position.set(3, 5, 4); scene.add(key);
+const rimA = new THREE.PointLight(0x6a5cff, 2.4, 12); rimA.position.set(-3, 2.5, -2.5); scene.add(rimA);
+const rimB = new THREE.PointLight(0xff3f8f, 1.8, 12); rimB.position.set(3, 1.2, -3); scene.add(rimB);
+const fillL = new THREE.PointLight(0x40ffb0, 0.8, 10); fillL.position.set(-3, 0.5, 3); scene.add(fillL);
+const turn = new THREE.Group(); scene.add(turn);
+
+let seed, t0, drops = [], spin = 0, vel = 0, last = 0;
+
+function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
+const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.45, side: THREE.DoubleSide }, extra));
+
+function rose(r, color) {
+  // golden-angle spiral of cupped petals; later (outer) petals are bigger and lean further out
+  const head = new THREE.Group(), c = new THREE.Color(color), N = 20;
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1), rad = 0.08 + 0.13 * u;
+    const geo = new THREE.SphereGeometry(rad, 8, 5, -0.7, 1.4, Math.PI * 0.1, Math.PI * 0.42);
+    const m = new THREE.Mesh(geo, mat(c.clone().offsetHSL((r() - 0.5) * 0.03, 0, (r() - 0.5) * 0.06 - u * 0.08)));
+    m.position.x = rad * (0.5 + 0.2 * u);       // wall sits off-centre, concave toward the middle
+    m.rotation.z = 0.08 + u * u * 0.75;                 // open outward with each layer
+    m.position.y = -u * 0.06;
+    const pivot = new THREE.Group(); pivot.rotation.y = i * 2.39996; pivot.add(m); head.add(pivot);
+  }
+  const calyx = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), mat(0x2f6b2a)); calyx.position.y = -0.16; calyx.scale.y = 0.6; head.add(calyx);
+  return head;
+}
+
+function filler(r, color) {
+  const head = new THREE.Group(), m = mat(color, { roughness: 0.4 });
+  for (let i = 0; i < 14; i++) {
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.035 + r() * 0.02, 6, 5), m), a = r() * 6.283, b = r() * 1.3;
+    s.position.set(Math.cos(a) * Math.sin(b) * 0.12, Math.cos(b) * 0.1, Math.sin(a) * Math.sin(b) * 0.12); head.add(s);
+  }
+  return head;
+}
+
+function stem(from, to, color) {
+  const d = to.clone().sub(from), m = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.016, d.length(), 5), mat(color));
+  m.position.copy(from).addScaledVector(d, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+  return m;
+}
+
+function build() {
+  turn.clear(); drops = [];
+  const r = rng(seed);
+  const pts = [[0, 0], [0.3, 0], [0.42, 0.12], [0.46, 0.35], [0.38, 0.65], [0.24, 0.9], [0.22, 1.0], [0.3, 1.08]].map(p => new THREE.Vector2(p[0], p[1]));
+  turn.add(new THREE.Mesh(new THREE.LatheGeometry(pts, 28), mat(0x7f9cff, { roughness: 0.15, metalness: 0.2, transparent: true, opacity: 0.55 })));
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.36, 0.5, 20), mat(0x2a4a9a, { transparent: true, opacity: 0.35 })); water.position.y = 0.3; turn.add(water);
+
+  const mouth = new THREE.Vector3(0, 0.95, 0), r0 = (r() * ROSES.length) | 0;
+  for (let i = 0; i < 22; i++) {
+    const isRose = i < 14, a = i * 2.4 + r() * 0.5, rad = isRose ? 0.1 + Math.sqrt(r()) * 0.62 : 0.4 + r() * 0.4;
+    const top = new THREE.Vector3(Math.cos(a) * rad, 2.3 - rad * rad * 0.9 + (r() - 0.5) * 0.15, Math.sin(a) * rad);
+    const item = new THREE.Group(), green = new THREE.Color().setHSL(0.27 + r() * 0.06, 0.55, 0.22 + r() * 0.1);
+    item.add(stem(mouth.clone().add(new THREE.Vector3((r() - 0.5) * 0.12, 0, (r() - 0.5) * 0.12)), top, green));
+    const head = isRose ? rose(r, ROSES[(r0 + i * 3) % ROSES.length]) : filler(r, FILL[(r() * FILL.length) | 0]);
+    head.position.copy(top); head.scale.setScalar(isRose ? 1 + r() * 0.35 : 0.9 + r() * 0.4);
+    head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(top.x * 0.9, 1, top.z * 0.9 + 0.35).normalize()); // open side up, leaning out and toward the viewer
+    item.add(head);
+    if (r() < 0.6) { // a leaf partway up the stem
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), mat(green.clone().offsetHSL(0, 0, 0.06)));
+      leaf.scale.set(0.03, 0.17, 0.07); leaf.position.lerpVectors(mouth, top, 0.45 + r() * 0.2);
+      leaf.position.x += Math.cos(a) * 0.1; leaf.position.z += Math.sin(a) * 0.1; leaf.rotation.set(r() - 0.5, a, (r() - 0.5) * 1.6);
+      item.add(leaf);
+    }
+    turn.add(item);
+    drops.push({ item, d: 0.18 * i + r() * 0.3 });
+  }
+  document.getElementById('seed').textContent = '#' + seed;
+  t0 = performance.now();
+}
+
+function resize() {
+  const { cols, rows, W, H } = ascii.resize();
+  gl.setSize(cols * 2, rows * 2, false);
+  camera.aspect = W / H;
+  camera.position.set(0, 2.6, Math.max(5.6, 4.6 / camera.aspect)); camera.lookAt(0, 1.35, 0);
+  camera.updateProjectionMatrix();
+}
+
+function frame(now) {
+  const t = frozen ?? (still ? 99 : (now - t0) / 1000), dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
+  for (const d of drops) d.item.position.y = 3.2 * (1 - ease((t - d.d) / 1.4)); // flowers drop into the vase
+  if (!still && frozen === null) { spin += dt * 0.35 + vel; vel *= 0.94; }
+  turn.rotation.y = frozen !== null ? frozen * 0.35 + spin : spin;
+  gl.render(scene, camera);
+  ascii.draw(gl.domElement);
+  if (!still && frozen === null) requestAnimationFrame(frame);
+}
+const redraw = () => { if (still || frozen !== null) frame(performance.now()); };
+
+function regrow() {
+  seed = (Math.random() * 1e6) | 0;
+  build();
+  document.getElementById('hint').style.opacity = 0;
+  redraw();
+}
+
+let down = null, moved = 0;
+addEventListener('pointerdown', e => { if (e.target.closest('a')) return; down = e.clientX; moved = 0; });
+addEventListener('pointermove', e => { if (down === null) return; const dx = e.clientX - down; down = e.clientX; moved += Math.abs(dx); spin += dx * 0.01; vel = dx * 0.002; redraw(); });
+addEventListener('pointerup', () => { if (down !== null && moved < 6) regrow(); down = null; });
+addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') regrow(); });
+addEventListener('resize', () => { resize(); redraw(); });
+
+seed = params.has('seed') ? +params.get('seed') | 0 : (Math.random() * 1e6) | 0;
+build();
+document.fonts.load('500 10px "IBM Plex Mono"').catch(() => {}).then(() => { resize(); t0 = performance.now(); requestAnimationFrame(frame); });
+</script>
+</body>
+</html>
